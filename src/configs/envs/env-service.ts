@@ -31,4 +31,8 @@ export class EnvService {
   getPort(): number {
     return Number(process.env.PORT) || 3000;
   }
+
+  getDatabaseUrl(): string {
+    return process.env.DATABASE_URL || '';
+  }
 }
