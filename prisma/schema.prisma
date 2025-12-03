@@ -52,5 +52,20 @@ model Department {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  specialties Specialty[]
+
   @@map("departments")
+}
+
+model Specialty {
+  id           String      @id @default(uuid())
+  name         String      @unique
+  description  String?
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("specialties")
 }
