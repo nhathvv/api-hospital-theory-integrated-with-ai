@@ -165,15 +165,6 @@ export class AuthService {
 
     return { message: 'Logged out successfully' };
   }
-
-  async logoutAll(userId: string) {
-    await this.prisma.refreshToken.deleteMany({
-      where: { userId },
-    });
-
-    return { message: 'Logged out from all devices successfully' };
-  }
-
   private async generateTokens(
     userId: string,
     email: string,
