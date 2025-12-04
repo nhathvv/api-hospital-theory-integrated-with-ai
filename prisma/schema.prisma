@@ -13,18 +13,27 @@ enum UserRole {
   PATIENT
 }
 
+enum DoctorStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
-  name      String?
+  username  String?
   phone     String?
+  fullName  String?
+  avatar    String?
+  address   String?
   role      UserRole @default(ADMIN)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   refreshTokens RefreshToken[]
+  doctor        Doctor?
 
   @@map("users")
 }
@@ -67,5 +76,80 @@ model Specialty {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
+  doctors Doctor[]
+
   @@map("specialties")
+}
+
+model Doctor {
+  id                 String       @id @default(uuid())
+  userId             String       @unique
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  primarySpecialtyId String
+  primarySpecialty   Specialty    @relation(fields: [primarySpecialtyId], references: [id])
+  subSpecialty       String?
+  professionalTitle  String?
+  yearsOfExperience  Int
+  consultationFee    Int
+  bio                String?
+  status             DoctorStatus @default(ACTIVE)
+  deletedAt          DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  educations     DoctorEducation[]
+  awards         DoctorAward[]
+  certifications DoctorCertification[]
+
+  @@index([userId])
+  @@index([primarySpecialtyId])
+  @@index([deletedAt])
+  @@map("doctors")
+}
+
+model DoctorEducation {
+  id             String   @id @default(uuid())
+  doctorId       String
+  doctor         Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  school         String
+  degree         String
+  graduationYear Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([doctorId])
+  @@map("doctor_educations")
+}
+
+model DoctorAward {
+  id           String   @id @default(uuid())
+  doctorId     String
+  doctor       Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  title        String
+  organization String
+  year         Int
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([doctorId])
+  @@map("doctor_awards")
+}
+
+model DoctorCertification {
+  id               String    @id @default(uuid())
+  doctorId         String
+  doctor           Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  certificateName  String
+  issuingAuthority String
+  licenseNumber    String
+  issueDate        DateTime
+  expiryDate       DateTime?
+  documentUrl      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([doctorId])
+  @@index([licenseNumber])
+  @@map("doctor_certifications")
 }

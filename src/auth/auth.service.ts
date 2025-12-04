@@ -44,7 +44,7 @@ export class AuthService {
       data: {
         email: registerDto.email,
         password: hashedPassword,
-        name: registerDto.name,
+        username: registerDto.name,
         phone: registerDto.phone,
       },
     });
@@ -56,7 +56,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        username: user.username,
         role: user.role,
       },
       ...tokens,
@@ -92,7 +92,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        username: user.username,
         role: user.role,
       },
       ...tokens,
@@ -151,7 +151,7 @@ export class AuthService {
       user: {
         id: storedToken.user.id,
         email: storedToken.user.email,
-        name: storedToken.user.name,
+        username: storedToken.user.username,
         role: storedToken.user.role,
       },
       ...tokens,

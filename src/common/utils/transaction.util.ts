@@ -1,0 +1,22 @@
+import { Logger } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+
+export class TransactionUtil {
+  private static readonly logger = new Logger(TransactionUtil.name);
+
+  static async executeInTransaction<T>(
+    prisma: PrismaService,
+    callback: (tx: Prisma.TransactionClient) => Promise<T>
+  ): Promise<T> {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        return await callback(tx);
+      });
+    } catch (error) {
+      this.logger.error('Transaction failed', error instanceof Error ? error.stack : error);
+      throw error;
+    }
+  }
+}
+
