@@ -1,10 +1,11 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { DoctorService } from './doctor.service';
-import { CreateDoctorDto } from './dto';
+import { CreateDoctorDto, QueryDoctorDto } from './dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 import { UserRole } from '../common/constants';
+import { PaginatedResponse } from 'src/common/dto';
 
 @ApiTags('Admin - Doctor Management')
 @ApiBearerAuth('JWT-auth')
@@ -13,6 +14,16 @@ import { UserRole } from '../common/constants';
 export class DoctorController {
   constructor(private readonly doctorService: DoctorService) {}
 
+  @Get()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get all doctors with filters' })
+  @ApiResponse({ status: 200, description: 'Doctors retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  async findAll(@Query() query: QueryDoctorDto) {
+    const result = await this.doctorService.findAll(query);
+    return PaginatedResponse.create(result.data, result.total, query, 'Doctors retrieved successfully');
+  }
   @Post()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create new doctor' })
