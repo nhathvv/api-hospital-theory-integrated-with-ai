@@ -1,12 +1,13 @@
 import { Injectable, ConflictException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma';
-import { CreateDoctorDto } from './dto';
+import { CreateDoctorDto, QueryDoctorDto, DoctorResponseDto } from './dto';
 import { UserService } from '../user';
 import { TransactionUtil } from '../common/utils';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { UserRole } from 'src/common/constants';
-import { DoctorStatus } from '@prisma/client';
+import { DoctorStatus, Prisma } from '@prisma/client';
+import { PaginatedResponse } from '../common/dto';
 
 @Injectable()
 export class DoctorService {
@@ -111,6 +112,86 @@ export class DoctorService {
     return password;
   }
 
+  async findAll(query: QueryDoctorDto) {
+    const where: Prisma.DoctorWhereInput = {};
+    if (query.name) {
+      where.user = {
+        fullName: {
+          contains: query.name,
+          mode: 'insensitive',
+        },
+      };
+    }
+    if (query.specialtyId) {
+      where.primarySpecialtyId = query.specialtyId;
+    }
+    if (query.status) {
+      where.status = query.status;
+    }
+    const [doctors, total] = await Promise.all([
+      this.prisma.doctor.findMany({
+        where,
+        ...query.getPrismaParams(),
+        orderBy: query.getPrismaSortParams(),
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              phone: true,
+              fullName: true,
+              avatar: true,
+              address: true,
+              role: true,
+            },
+          },
+          primarySpecialty: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              isActive: true,
+            },
+          },
+        },
+      }),
+      this.prisma.doctor.count({ where }),
+    ]);
+    const doctorResponses: DoctorResponseDto[] = doctors.map((doctor) => ({
+      id: doctor.id,
+      userId: doctor.userId,
+      user: {
+        id: doctor.user.id,
+        email: doctor.user.email,
+        username: doctor.user.username ?? undefined,
+        phone: doctor.user.phone ?? undefined,
+        fullName: doctor.user.fullName ?? undefined,
+        avatar: doctor.user.avatar ?? undefined,
+        address: doctor.user.address ?? undefined,
+        role: doctor.user.role,
+      },
+      primarySpecialtyId: doctor.primarySpecialtyId,
+      primarySpecialty: {
+        id: doctor.primarySpecialty.id,
+        name: doctor.primarySpecialty.name,
+        description: doctor.primarySpecialty.description ?? undefined,
+        isActive: doctor.primarySpecialty.isActive,
+      },
+      subSpecialty: doctor.subSpecialty ?? undefined,
+      professionalTitle: doctor.professionalTitle ?? undefined,
+      yearsOfExperience: doctor.yearsOfExperience,
+      consultationFee: doctor.consultationFee,
+      bio: doctor.bio ?? undefined,
+      status: doctor.status,
+      createdAt: doctor.createdAt,
+      updatedAt: doctor.updatedAt,
+    }));
+    return {
+      data: doctorResponses,
+      total,
+    }
+  }
   private async validateData(dto: CreateDoctorDto): Promise<void> {
     const [existingUser, specialty] = await Promise.all([
       this.userService.findByEmail(dto.email),
