@@ -3,5 +3,4 @@ export * from './doctor-education.dto';
 export * from './doctor-award.dto';
 export * from './doctor-certification.dto';
 export * from './query-doctor.dto';
-export * from './doctor-response.dto';
 
