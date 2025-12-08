@@ -1,0 +1,54 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { DayOfWeek } from '@prisma/client';
+import { TimeSlotDto } from './time-slot.dto';
+import { IsAfter } from '../../common/validators/date-after.validator';
+
+export class CreateDoctorScheduleDto {
+  @ApiProperty({ description: 'Doctor ID (UUID)' })
+  @IsUUID()
+  doctorId: string;
+
+  @ApiProperty({ description: 'Start date (YYYY-MM-DD)', example: '2025-02-03' })
+  @IsDateString()
+  startDate: string;
+
+  @ApiProperty({ description: 'End date (YYYY-MM-DD)', example: '2025-04-30' })
+  @IsDateString()
+  @IsAfter('startDate', { message: 'endDate must be after startDate' })
+  endDate: string;
+
+  @ApiProperty({ enum: DayOfWeek, isArray: true, description: 'Days of week', example: ['MONDAY', 'TUESDAY'] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsEnum(DayOfWeek, { each: true })
+  daysOfWeek: DayOfWeek[];
+
+  @ApiPropertyOptional({ description: 'Timezone', default: 'Asia/Ho_Chi_Minh' })
+  @IsOptional()
+  @IsString()
+  timezone?: string;
+
+  @ApiPropertyOptional({ description: 'Schedule active status', default: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiProperty({ type: [TimeSlotDto], description: 'Time slots' })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => TimeSlotDto)
+  timeSlots: TimeSlotDto[];
+}
