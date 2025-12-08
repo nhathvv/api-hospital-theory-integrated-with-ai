@@ -25,8 +25,18 @@ export class DepartmentService {
         throw new ConflictException('Department code already exists');
       }
     }
+    if (createDepartmentDto.headId) {
+      await this.validateHead(createDepartmentDto.headId);
+    }
     return this.prisma.department.create({
       data: createDepartmentDto,
+      include: {
+        head: {
+          include: {
+            user: { select: { id: true, fullName: true, email: true } },
+          },
+        },
+      },
     });
   }
 
@@ -46,6 +56,13 @@ export class DepartmentService {
     const [departments, total] = await Promise.all([
       this.prisma.department.findMany({
         where,
+        include: {
+          head: {
+            include: {
+              user: { select: { id: true, fullName: true, email: true } },
+            },
+          },
+        },
         ...query.getPrismaParams(),
         orderBy: query.getPrismaSortParams(),
       }),
@@ -55,11 +72,18 @@ export class DepartmentService {
       data: departments,
       total,
       query,
-    }
+    };
   }
   async findOne(id: string) {
     const department = await this.prisma.department.findUnique({
       where: { id },
+      include: {
+        head: {
+          include: {
+            user: { select: { id: true, fullName: true, email: true } },
+          },
+        },
+      },
     });
     if (!department) {
       throw new NotFoundException('Department not found');
@@ -85,9 +109,19 @@ export class DepartmentService {
         throw new ConflictException('Department code already exists');
       }
     }
+    if (updateDepartmentDto.headId) {
+      await this.validateHead(updateDepartmentDto.headId, id);
+    }
     return this.prisma.department.update({
       where: { id },
       data: updateDepartmentDto,
+      include: {
+        head: {
+          include: {
+            user: { select: { id: true, fullName: true, email: true } },
+          },
+        },
+      },
     });
   }
 
@@ -96,6 +130,23 @@ export class DepartmentService {
     return this.prisma.department.delete({
       where: { id },
     });
+  }
+
+  private async validateHead(headId: string, excludeDepartmentId?: string) {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { id: headId },
+    });
+    if (!doctor) {
+      throw new NotFoundException('Doctor not found');
+    }
+    const existingHead = await this.prisma.department.findFirst({
+      where: { headId },
+    });
+    if (existingHead && existingHead.id !== excludeDepartmentId) {
+      throw new ConflictException(
+        'This doctor is already head of another department',
+      );
+    }
   }
 }
 

@@ -34,6 +34,8 @@ export class DepartmentController {
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new department (ADMIN only)' })
+  @ApiResponseSwagger({ status: 201, description: 'Department created successfully' })
+  @ApiResponseSwagger({ status: 409, description: 'Department name or code already exists' })
   async create(@Body() createDepartmentDto: CreateDepartmentDto) {
     const department = await this.departmentService.create(createDepartmentDto);
     return ApiResponse.success(department, 'Department created successfully', 201);
@@ -42,6 +44,7 @@ export class DepartmentController {
   @Get()
   @Roles(UserRole.ADMIN, UserRole.DOCTOR)
   @ApiOperation({ summary: 'Get all departments with pagination (ADMIN, DOCTOR)' })
+  @ApiResponseSwagger({ status: 200, description: 'Departments retrieved successfully' })
   async findAll(@Query() query: QueryDepartmentDto) {
     const result = await this.departmentService.findAll(query);
     return PaginatedResponse.create(result.data, result.total, query, 'Departments retrieved successfully');
@@ -50,6 +53,7 @@ export class DepartmentController {
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.DOCTOR)
   @ApiOperation({ summary: 'Get a department by ID (ADMIN, DOCTOR)' })
+  @ApiResponseSwagger({ status: 200, description: 'Department retrieved successfully' })
   @ApiResponseSwagger({ status: 404, description: 'Department not found' })
   async findOne(@Param('id') id: string) {
     const department = await this.departmentService.findOne(id);
@@ -59,6 +63,9 @@ export class DepartmentController {
   @Patch(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update a department (ADMIN only)' })
+  @ApiResponseSwagger({ status: 200, description: 'Department updated successfully' })
+  @ApiResponseSwagger({ status: 404, description: 'Department not found' })
+  @ApiResponseSwagger({ status: 409, description: 'Department name or code already exists' })
   async update(@Param('id') id: string, @Body() updateDepartmentDto: UpdateDepartmentDto) {
     const department = await this.departmentService.update(id, updateDepartmentDto);
     return ApiResponse.success(department, 'Department updated successfully');
@@ -68,9 +75,10 @@ export class DepartmentController {
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a department (ADMIN only)' })
+  @ApiResponseSwagger({ status: 200, description: 'Department deleted successfully' })
+  @ApiResponseSwagger({ status: 404, description: 'Department not found' })
   async remove(@Param('id') id: string) {
     const department = await this.departmentService.remove(id);
     return ApiResponse.success(department, 'Department deleted successfully');
   }
 }
-
