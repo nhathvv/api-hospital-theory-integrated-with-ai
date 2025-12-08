@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Query, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Query, Param, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse as ApiResponseSwagger, ApiBearerAuth } from '@nestjs/swagger';
 import { DoctorService } from './doctor.service';
 import { CreateDoctorDto, QueryDoctorDto } from './dto';
@@ -47,6 +47,18 @@ export class DoctorController {
   @ApiResponseSwagger({ status: 409, description: 'Conflict - email or license already exists' })
   async create(@Body() createDoctorDto: CreateDoctorDto) {
     return this.doctorService.create(createDoctorDto);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Soft delete doctor by ID' })
+  @ApiResponseSwagger({ status: 200, description: 'Doctor deleted successfully' })
+  @ApiResponseSwagger({ status: 401, description: 'Unauthorized' })
+  @ApiResponseSwagger({ status: 403, description: 'Forbidden - Admin only' })
+  @ApiResponseSwagger({ status: 404, description: 'Doctor not found' })
+  async remove(@Param('id') id: string) {
+    await this.doctorService.remove(id);
+    return ApiResponse.success(null, 'Doctor deleted successfully');
   }
 }
 
