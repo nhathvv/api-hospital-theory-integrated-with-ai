@@ -12,6 +12,11 @@ async function bootstrap() {
   }
   EnvService.getInstance().validate(process.env);
   const app = await NestFactory.create(AppModule);
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: false,
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
