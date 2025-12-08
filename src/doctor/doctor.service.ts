@@ -127,8 +127,18 @@ export class DoctorService {
     return doctor;
   }
 
+  async remove(id: string) {
+    await this.findOne(id);
+    return this.prisma.doctor.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  }
+
   private buildFilterQuery(query: QueryDoctorDto): Prisma.DoctorWhereInput {
-    const where: Prisma.DoctorWhereInput = {};
+    const where: Prisma.DoctorWhereInput = {
+      deletedAt: null,
+    };
     if (query.name) {
       where.user = {
         fullName: {
