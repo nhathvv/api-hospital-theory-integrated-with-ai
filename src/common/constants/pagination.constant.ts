@@ -18,4 +18,3 @@ export const PaginationDefault = {
   SORT_BY: 'createdAt',
   SORT_ORDER: SortOrder.DESC,
 } as const;
-

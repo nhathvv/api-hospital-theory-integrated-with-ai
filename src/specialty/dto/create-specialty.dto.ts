@@ -1,8 +1,17 @@
-import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSpecialtyDto {
-  @ApiProperty({ description: 'Specialty name', example: 'Tim mạch (Cardiology)' })
+  @ApiProperty({
+    description: 'Specialty name',
+    example: 'Tim mạch (Cardiology)',
+  })
   @IsString()
   @MaxLength(255)
   name: string;
@@ -18,9 +27,11 @@ export class CreateSpecialtyDto {
   @IsUUID()
   departmentId?: string;
 
-  @ApiPropertyOptional({ description: 'Specialty active status', default: true })
+  @ApiPropertyOptional({
+    description: 'Specialty active status',
+    default: true,
+  })
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 }
-

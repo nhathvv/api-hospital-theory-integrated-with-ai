@@ -19,4 +19,3 @@ export class CreateDepartmentDto {
   @IsBoolean()
   isActive?: boolean;
 }
-

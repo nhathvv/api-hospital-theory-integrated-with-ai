@@ -1,13 +1,26 @@
-import { IsInt, IsOptional, IsString, MaxLength, Min, Max } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  Max,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class DoctorAwardDto {
-  @ApiProperty({ description: 'Award title', example: 'National Clinical Excellence Award' })
+  @ApiProperty({
+    description: 'Award title',
+    example: 'National Clinical Excellence Award',
+  })
   @IsString()
   @MaxLength(255)
   title: string;
 
-  @ApiProperty({ description: 'Issuing organization', example: 'Vietnam Medical Association' })
+  @ApiProperty({
+    description: 'Issuing organization',
+    example: 'Vietnam Medical Association',
+  })
   @IsString()
   @MaxLength(255)
   organization: string;
@@ -24,4 +37,3 @@ export class DoctorAwardDto {
   @MaxLength(1000)
   description?: string;
 }
-

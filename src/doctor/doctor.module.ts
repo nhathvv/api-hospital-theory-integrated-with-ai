@@ -11,4 +11,3 @@ import { UserModule } from '../user';
   exports: [DoctorService],
 })
 export class DoctorModule {}
-

@@ -18,7 +18,11 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { DepartmentService } from './department.service';
-import { CreateDepartmentDto, UpdateDepartmentDto, QueryDepartmentDto } from './dto';
+import {
+  CreateDepartmentDto,
+  UpdateDepartmentDto,
+  QueryDepartmentDto,
+} from './dto';
 import { ApiResponse, PaginatedResponse, UserRole } from '../common';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
@@ -36,15 +40,26 @@ export class DepartmentController {
   @ApiOperation({ summary: 'Create a new department (ADMIN only)' })
   async create(@Body() createDepartmentDto: CreateDepartmentDto) {
     const department = await this.departmentService.create(createDepartmentDto);
-    return ApiResponse.success(department, 'Department created successfully', 201);
+    return ApiResponse.success(
+      department,
+      'Department created successfully',
+      201,
+    );
   }
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.DOCTOR)
-  @ApiOperation({ summary: 'Get all departments with pagination (ADMIN, DOCTOR)' })
+  @ApiOperation({
+    summary: 'Get all departments with pagination (ADMIN, DOCTOR)',
+  })
   async findAll(@Query() query: QueryDepartmentDto) {
     const result = await this.departmentService.findAll(query);
-    return PaginatedResponse.create(result.data, result.total, query, 'Departments retrieved successfully');
+    return PaginatedResponse.create(
+      result.data,
+      result.total,
+      query,
+      'Departments retrieved successfully',
+    );
   }
 
   @Get(':id')
@@ -59,8 +74,14 @@ export class DepartmentController {
   @Patch(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update a department (ADMIN only)' })
-  async update(@Param('id') id: string, @Body() updateDepartmentDto: UpdateDepartmentDto) {
-    const department = await this.departmentService.update(id, updateDepartmentDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateDepartmentDto: UpdateDepartmentDto,
+  ) {
+    const department = await this.departmentService.update(
+      id,
+      updateDepartmentDto,
+    );
     return ApiResponse.success(department, 'Department updated successfully');
   }
 
@@ -73,4 +94,3 @@ export class DepartmentController {
     return ApiResponse.success(department, 'Department deleted successfully');
   }
 }
-

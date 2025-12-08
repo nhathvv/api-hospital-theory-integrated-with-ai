@@ -22,4 +22,3 @@ export function parseExpirationToSeconds(expiration: string): number {
 export function parseExpirationToMs(expiration: string): number {
   return parseExpirationToSeconds(expiration) * 1000;
 }
-

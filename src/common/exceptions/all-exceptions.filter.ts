@@ -34,8 +34,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const { status, message, errorCode } =
-      this.getExceptionDetails(exception);
+    const { status, message, errorCode } = this.getExceptionDetails(exception);
 
     const errorResponse: ErrorResponse = {
       success: false,
@@ -64,8 +63,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const message =
         typeof response === 'string'
           ? response
-          : (response as { message?: string }).message ||
-            exception.message;
+          : (response as { message?: string }).message || exception.message;
 
       return {
         status: exception.getStatus(),
@@ -127,7 +125,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     message: string;
     errorCode: string;
   } {
-    const prismaError = exception as { code: string; meta?: { target?: string[] } };
+    const prismaError = exception as {
+      code: string;
+      meta?: { target?: string[] };
+    };
 
     switch (prismaError.code) {
       case 'P2002': // Unique constraint violation
@@ -157,4 +158,3 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
   }
 }
-

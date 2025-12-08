@@ -3,13 +3,18 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsAfter } from '../../common/validators/date-after.validator';
 
 export class DoctorCertificationDto {
-  @ApiProperty({ description: 'Certificate name', example: 'Medical Practice License' })
+  @ApiProperty({
+    description: 'Certificate name',
+    example: 'Medical Practice License',
+  })
   @IsString()
   @MaxLength(255)
-
   certificateName: string;
 
-  @ApiProperty({ description: 'Issuing authority', example: 'Vietnam Ministry of Health' })
+  @ApiProperty({
+    description: 'Issuing authority',
+    example: 'Vietnam Ministry of Health',
+  })
   @IsString()
   @MaxLength(255)
   issuingAuthority: string;
@@ -23,16 +28,21 @@ export class DoctorCertificationDto {
   @IsDateString()
   issueDate: string;
 
-  @ApiPropertyOptional({ description: 'Expiry date (must be after issue date)', example: '2025-06-01' })
+  @ApiPropertyOptional({
+    description: 'Expiry date (must be after issue date)',
+    example: '2025-06-01',
+  })
   @IsOptional()
   @IsDateString()
   @IsAfter('issueDate', { message: 'Expiry date must be after issue date' })
   expiryDate?: string;
 
-  @ApiPropertyOptional({ description: 'Document URL', example: '/uploads/certifications/doc-123.pdf' })
+  @ApiPropertyOptional({
+    description: 'Document URL',
+    example: '/uploads/certifications/doc-123.pdf',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
   documentUrl?: string;
 }
-

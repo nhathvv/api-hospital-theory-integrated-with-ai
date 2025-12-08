@@ -100,6 +100,7 @@ model Doctor {
   educations     DoctorEducation[]
   awards         DoctorAward[]
   certifications DoctorCertification[]
+  schedules      DoctorSchedule[]
 
   @@index([userId])
   @@index([primarySpecialtyId])
@@ -152,4 +153,54 @@ model DoctorCertification {
   @@index([doctorId])
   @@index([licenseNumber])
   @@map("doctor_certifications")
+}
+
+enum ExaminationType {
+  IN_PERSON
+  ONLINE
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model DoctorSchedule {
+  id        String      @id @default(uuid())
+  doctorId  String
+  doctor    Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  startDate DateTime    @db.Date
+  endDate   DateTime    @db.Date
+  timezone  String      @default("Asia/Ho_Chi_Minh")
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  timeSlots DoctorTimeSlot[]
+
+  @@index([doctorId])
+  @@index([startDate, endDate])
+  @@map("doctor_schedules")
+}
+
+model DoctorTimeSlot {
+  id              String          @id @default(uuid())
+  scheduleId      String
+  schedule        DoctorSchedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  dayOfWeek       DayOfWeek
+  startTime       String
+  endTime         String
+  examinationType ExaminationType
+  maxPatients     Int
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([scheduleId])
+  @@index([dayOfWeek])
+  @@map("doctor_time_slots")
 }

@@ -2,7 +2,10 @@ import { IsInt, IsString, MaxLength, Min, Max } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class DoctorEducationDto {
-  @ApiProperty({ description: 'School name', example: 'University of Medicine and Pharmacy' })
+  @ApiProperty({
+    description: 'School name',
+    example: 'University of Medicine and Pharmacy',
+  })
   @IsString()
   @MaxLength(255)
   school: string;
@@ -18,4 +21,3 @@ export class DoctorEducationDto {
   @Max(new Date().getFullYear())
   graduationYear: number;
 }
-

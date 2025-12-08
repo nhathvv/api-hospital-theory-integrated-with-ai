@@ -5,7 +5,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma';
-import { CreateSpecialtyDto, UpdateSpecialtyDto, QuerySpecialtyDto } from './dto';
+import {
+  CreateSpecialtyDto,
+  UpdateSpecialtyDto,
+  QuerySpecialtyDto,
+} from './dto';
 
 @Injectable()
 export class SpecialtyService {
@@ -13,7 +17,7 @@ export class SpecialtyService {
 
   async create(createSpecialtyDto: CreateSpecialtyDto) {
     await this.validateUniqueName(createSpecialtyDto.name);
-    
+
     if (createSpecialtyDto.departmentId) {
       await this.validateDepartmentExists(createSpecialtyDto.departmentId);
     }
@@ -125,4 +129,3 @@ export class SpecialtyService {
     }
   }
 }
-

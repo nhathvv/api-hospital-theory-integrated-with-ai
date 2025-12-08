@@ -17,7 +17,7 @@ export class UserService {
       avatar?: string;
       address?: string;
       role: UserRole;
-    }
+    },
   ) {
     return tx.user.create({
       data,
@@ -30,4 +30,3 @@ export class UserService {
     });
   }
 }
-

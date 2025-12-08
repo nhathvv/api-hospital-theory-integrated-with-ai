@@ -1,5 +1,10 @@
 import { Controller, Post, Body, UseGuards, Get, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { DoctorService } from './doctor.service';
 import { CreateDoctorDto, QueryDoctorDto } from './dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
@@ -22,7 +27,12 @@ export class DoctorController {
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   async findAll(@Query() query: QueryDoctorDto) {
     const result = await this.doctorService.findAll(query);
-    return PaginatedResponse.create(result.data, result.total, query, 'Doctors retrieved successfully');
+    return PaginatedResponse.create(
+      result.data,
+      result.total,
+      query,
+      'Doctors retrieved successfully',
+    );
   }
   @Post()
   @Roles(UserRole.ADMIN)
@@ -31,9 +41,11 @@ export class DoctorController {
   @ApiResponse({ status: 400, description: 'Bad request - validation error' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
-  @ApiResponse({ status: 409, description: 'Conflict - email or license already exists' })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict - email or license already exists',
+  })
   async create(@Body() createDoctorDto: CreateDoctorDto) {
     return this.doctorService.create(createDoctorDto);
   }
 }
-

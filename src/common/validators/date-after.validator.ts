@@ -22,7 +22,10 @@ export class IsAfterConstraint implements ValidatorConstraintInterface {
   }
 }
 
-export function IsAfter(property: string, validationOptions?: ValidationOptions) {
+export function IsAfter(
+  property: string,
+  validationOptions?: ValidationOptions,
+) {
   return (object: any, propertyName: string) => {
     registerDecorator({
       target: object.constructor,

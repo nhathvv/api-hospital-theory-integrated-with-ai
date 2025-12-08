@@ -41,7 +41,10 @@ export class CreateDoctorDto {
   @MaxLength(255)
   fullName: string;
 
-  @ApiPropertyOptional({ description: 'Avatar URL', example: '/uploads/avatars/doctor-123.jpg' })
+  @ApiPropertyOptional({
+    description: 'Avatar URL',
+    example: '/uploads/avatars/doctor-123.jpg',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
@@ -57,13 +60,19 @@ export class CreateDoctorDto {
   @IsUUID()
   primarySpecialtyId: string;
 
-  @ApiPropertyOptional({ description: 'Sub-specialty', example: 'Interventional Cardiology' })
+  @ApiPropertyOptional({
+    description: 'Sub-specialty',
+    example: 'Interventional Cardiology',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(255)
   subSpecialty?: string;
 
-  @ApiPropertyOptional({ description: 'Professional title', example: 'Associate Professor' })
+  @ApiPropertyOptional({
+    description: 'Professional title',
+    example: 'Associate Professor',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(255)
@@ -99,16 +108,22 @@ export class CreateDoctorDto {
   @Type(() => DoctorAwardDto)
   awards?: DoctorAwardDto[];
 
-  @ApiProperty({ description: 'Certifications', type: [DoctorCertificationDto] })
+  @ApiProperty({
+    description: 'Certifications',
+    type: [DoctorCertificationDto],
+  })
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => DoctorCertificationDto)
   certifications: DoctorCertificationDto[];
 
-  @ApiPropertyOptional({ description: 'Doctor status', enum: DoctorStatus, default: 'ACTIVE' })
+  @ApiPropertyOptional({
+    description: 'Doctor status',
+    enum: DoctorStatus,
+    default: 'ACTIVE',
+  })
   @IsOptional()
   @IsEnum(DoctorStatus)
   status?: DoctorStatus;
 }
-

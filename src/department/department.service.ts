@@ -4,7 +4,11 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma';
-import { CreateDepartmentDto, UpdateDepartmentDto, QueryDepartmentDto } from './dto';
+import {
+  CreateDepartmentDto,
+  UpdateDepartmentDto,
+  QueryDepartmentDto,
+} from './dto';
 
 @Injectable()
 export class DepartmentService {
@@ -55,7 +59,7 @@ export class DepartmentService {
       data: departments,
       total,
       query,
-    }
+    };
   }
   async findOne(id: string) {
     const department = await this.prisma.department.findUnique({
@@ -98,4 +102,3 @@ export class DepartmentService {
     });
   }
 }
-

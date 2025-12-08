@@ -57,8 +57,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     path: string,
   ): ErrorResponse {
     const errorCode = this.getErrorCodeFromStatus(status);
-    const { message, errors } =
-      this.extractMessageAndErrors(exceptionResponse);
+    const { message, errors } = this.extractMessageAndErrors(exceptionResponse);
 
     return {
       success: false,
@@ -107,9 +106,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     return {
       message:
-        (response.message as string) ||
-        ErrorMessages[ErrorCode.UNKNOWN_ERROR],
+        (response.message as string) || ErrorMessages[ErrorCode.UNKNOWN_ERROR],
     };
   }
 }
-

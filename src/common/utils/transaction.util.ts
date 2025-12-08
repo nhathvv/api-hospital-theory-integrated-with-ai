@@ -7,16 +7,18 @@ export class TransactionUtil {
 
   static async executeInTransaction<T>(
     prisma: PrismaService,
-    callback: (tx: Prisma.TransactionClient) => Promise<T>
+    callback: (tx: Prisma.TransactionClient) => Promise<T>,
   ): Promise<T> {
     try {
       return await prisma.$transaction(async (tx) => {
         return await callback(tx);
       });
     } catch (error) {
-      this.logger.error('Transaction failed', error instanceof Error ? error.stack : error);
+      this.logger.error(
+        'Transaction failed',
+        error instanceof Error ? error.stack : error,
+      );
       throw error;
     }
   }
 }
-

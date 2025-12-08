@@ -1,15 +1,5 @@
-import {
-  Controller,
-  Post,
-  Body,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, RefreshTokenDto } from './dto';
 
@@ -32,7 +22,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: 200, description: 'Login successful' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - invalid credentials' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - invalid credentials',
+  })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
@@ -41,7 +34,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - invalid refresh token' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - invalid refresh token',
+  })
   async refreshTokens(@Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.refreshTokens(refreshTokenDto);
   }
@@ -50,7 +46,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout and invalidate refresh token' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - invalid refresh token' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - invalid refresh token',
+  })
   async logout(@Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.logout(refreshTokenDto.refreshToken);
   }

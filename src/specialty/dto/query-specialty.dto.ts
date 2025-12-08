@@ -15,4 +15,3 @@ export class QuerySpecialtyDto extends PaginationQueryDto {
   @IsUUID()
   departmentId?: string;
 }
-

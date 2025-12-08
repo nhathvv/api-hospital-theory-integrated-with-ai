@@ -8,4 +8,3 @@ export class QueryDepartmentDto extends PaginationQueryDto {
   @IsBoolean()
   isActive?: boolean;
 }
-
