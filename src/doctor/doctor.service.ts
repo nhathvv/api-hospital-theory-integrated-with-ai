@@ -6,7 +6,6 @@ import { TransactionUtil, PasswordUtil } from '../common/utils';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/common/constants';
 import { DoctorStatus, Prisma } from '@prisma/client';
-import { PaginatedResponse } from '../common/dto';
 
 @Injectable()
 export class DoctorService {
@@ -117,6 +116,17 @@ export class DoctorService {
     }
   }
 
+  async findOne(id: string) {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { id },
+      include: this.getDoctorDetailIncludes(),
+    });
+    if (!doctor) {
+      throw new NotFoundException('Doctor not found');
+    }
+    return doctor;
+  }
+
   private buildFilterQuery(query: QueryDoctorDto): Prisma.DoctorWhereInput {
     const where: Prisma.DoctorWhereInput = {};
     if (query.name) {
@@ -156,6 +166,78 @@ export class DoctorService {
           name: true,
           description: true,
           isActive: true,
+        },
+      },
+    };
+  }
+
+  private getDoctorDetailIncludes() {
+    return {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          phone: true,
+          fullName: true,
+          avatar: true,
+          address: true,
+          role: true,
+          createdAt: true,
+        },
+      },
+      primarySpecialty: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          isActive: true,
+          department: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      educations: {
+        orderBy: { graduationYear: 'desc' as const },
+      },
+      certifications: {
+        orderBy: { issueDate: 'desc' as const },
+      },
+      awards: {
+        orderBy: { year: 'desc' as const },
+      },
+      headOfDepartment: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      schedules: {
+        where: { isActive: true },
+        orderBy: { startDate: 'desc' as const },
+        select: {
+          id: true,
+          startDate: true,
+          endDate: true,
+          timezone: true,
+          isActive: true,
+          timeSlots: {
+            orderBy: [
+              { dayOfWeek: 'asc' as const },
+              { startTime: 'asc' as const },
+            ],
+            select: {
+              id: true,
+              dayOfWeek: true,
+              startTime: true,
+              endTime: true,
+              examinationType: true,
+              maxPatients: true,
+            },
+          },
         },
       },
     };
