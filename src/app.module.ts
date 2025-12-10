@@ -7,9 +7,20 @@ import { DepartmentModule } from './department';
 import { SpecialtyModule } from './specialty';
 import { DoctorModule } from './doctor';
 import { DoctorScheduleModule } from './doctor-schedule';
+import { PatientModule } from './patient';
+import { AdminModule } from './admin';
 
 @Module({
-  imports: [PrismaModule, AuthModule, DepartmentModule, SpecialtyModule, DoctorModule, DoctorScheduleModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    DepartmentModule,
+    SpecialtyModule,
+    DoctorModule,
+    DoctorScheduleModule,
+    PatientModule,
+    AdminModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

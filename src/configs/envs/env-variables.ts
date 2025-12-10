@@ -24,5 +24,9 @@ class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   JWT_REFRESH_EXPIRATION: string;
+
+  @IsString()
+  @IsNotEmpty()
+  DEFAULT_PASSWORD: string;
 }
 export default EnvironmentVariables;

@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma';
 import { EnvService } from '../configs/envs/env-service';
 import { RegisterDto, LoginDto, RefreshTokenDto } from './dto';
+import { TransactionUtil } from '../common/utils';
 
 export interface TokenPayload {
   sub: string;
@@ -40,13 +41,23 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: registerDto.email,
-        password: hashedPassword,
-        username: registerDto.name,
-        phone: registerDto.phone,
-      },
+    const user = await TransactionUtil.executeInTransaction(this.prisma, async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email: registerDto.email,
+          password: hashedPassword,
+          username: registerDto.name,
+          phone: registerDto.phone,
+        },
+      });
+
+      await tx.patient.create({
+        data: {
+          userId: newUser.id,
+        },
+      });
+
+      return newUser;
     });
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
@@ -164,6 +175,7 @@ export class AuthService {
 
     return { message: 'Logged out successfully' };
   }
+
   private async generateTokens(
     userId: string,
     email: string,

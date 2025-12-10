@@ -11,29 +11,25 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse as ApiResponseSwagger,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
-import { DepartmentService } from './department.service';
-import { CreateDepartmentDto, UpdateDepartmentDto, QueryDepartmentDto } from './dto';
-import { ApiResponse, PaginatedResponse, UserRole } from '../common';
-import { JwtAuthGuard, RolesGuard } from '../auth/guards';
-import { Roles } from '../auth/decorators';
+import { ApiTags, ApiOperation, ApiResponse as ApiResponseSwagger, ApiBearerAuth } from '@nestjs/swagger';
+import { DepartmentService } from '../../department/department.service';
+import { CreateDepartmentDto, UpdateDepartmentDto, QueryDepartmentDto } from '../../department/dto';
+import { ApiResponse, PaginatedResponse } from '../../common/dto';
+import { UserRole } from '../../common/constants';
+import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
+import { Roles } from '../../auth/decorators';
 
-@ApiTags('Departments')
+@ApiTags('Admin - Department Management')
 @ApiBearerAuth('JWT-auth')
-@Controller('departments')
 @UseGuards(JwtAuthGuard, RolesGuard)
-export class DepartmentController {
+@Roles(UserRole.ADMIN)
+@Controller('admin/departments')
+export class AdminDepartmentController {
   constructor(private readonly departmentService: DepartmentService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new department (ADMIN only)' })
+  @ApiOperation({ summary: 'Create a new department' })
   @ApiResponseSwagger({ status: 201, description: 'Department created successfully' })
   @ApiResponseSwagger({ status: 409, description: 'Department name or code already exists' })
   async create(@Body() createDepartmentDto: CreateDepartmentDto) {
@@ -42,8 +38,7 @@ export class DepartmentController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.DOCTOR)
-  @ApiOperation({ summary: 'Get all departments with pagination (ADMIN, DOCTOR)' })
+  @ApiOperation({ summary: 'Get all departments with pagination' })
   @ApiResponseSwagger({ status: 200, description: 'Departments retrieved successfully' })
   async findAll(@Query() query: QueryDepartmentDto) {
     const result = await this.departmentService.findAll(query);
@@ -51,8 +46,7 @@ export class DepartmentController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.DOCTOR)
-  @ApiOperation({ summary: 'Get a department by ID (ADMIN, DOCTOR)' })
+  @ApiOperation({ summary: 'Get a department by ID' })
   @ApiResponseSwagger({ status: 200, description: 'Department retrieved successfully' })
   @ApiResponseSwagger({ status: 404, description: 'Department not found' })
   async findOne(@Param('id') id: string) {
@@ -61,8 +55,7 @@ export class DepartmentController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update a department (ADMIN only)' })
+  @ApiOperation({ summary: 'Update a department' })
   @ApiResponseSwagger({ status: 200, description: 'Department updated successfully' })
   @ApiResponseSwagger({ status: 404, description: 'Department not found' })
   @ApiResponseSwagger({ status: 409, description: 'Department name or code already exists' })
@@ -72,9 +65,8 @@ export class DepartmentController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Delete a department (ADMIN only)' })
+  @ApiOperation({ summary: 'Delete a department' })
   @ApiResponseSwagger({ status: 200, description: 'Department deleted successfully' })
   @ApiResponseSwagger({ status: 404, description: 'Department not found' })
   async remove(@Param('id') id: string) {

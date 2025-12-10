@@ -2,14 +2,16 @@ import { Injectable, ConflictException, NotFoundException, Logger } from '@nestj
 import { PrismaService } from '../prisma';
 import { CreateDoctorDto, QueryDoctorDto } from './dto';
 import { UserService } from '../user';
-import { TransactionUtil, PasswordUtil } from '../common/utils';
+import { TransactionUtil } from '../common/utils';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/common/constants';
 import { DoctorStatus, Prisma } from '@prisma/client';
+import { EnvService } from '../configs/envs/env-service';
 
 @Injectable()
 export class DoctorService {
   private readonly logger = new Logger(DoctorService.name);
+  private readonly envService = EnvService.getInstance();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -18,9 +20,9 @@ export class DoctorService {
 
   async create(createDoctorDto: CreateDoctorDto) {
     await this.validateData(createDoctorDto);
-    const temporaryPassword = PasswordUtil.generateTemporaryPassword();
-    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-    this.logger.log(`Generated temporary password for doctor: ${createDoctorDto.email}`);
+    const defaultPassword = this.envService.getDefaultPassword();
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+    this.logger.log(`Created doctor account with default password: ${createDoctorDto.email}`);
     const doctor = await TransactionUtil.executeInTransaction(this.prisma, async (tx) => {
       const user = await this.userService.createUserInTransaction(tx, {
         email: createDoctorDto.email,
@@ -95,7 +97,7 @@ export class DoctorService {
     });
     return {
       ...doctor,
-      temporaryPassword,
+      defaultPassword,
     };
   }
   
@@ -125,6 +127,22 @@ export class DoctorService {
       throw new NotFoundException('Doctor not found');
     }
     return doctor;
+  }
+
+  async getProfileByUserId(userId: string) {
+    return this.prisma.doctor.findUnique({
+      where: { userId },
+      select: {
+        id: true,
+        primarySpecialty: { select: { id: true, name: true } },
+        subSpecialty: true,
+        professionalTitle: true,
+        yearsOfExperience: true,
+        consultationFee: true,
+        bio: true,
+        status: true,
+      },
+    });
   }
 
   async remove(id: string) {

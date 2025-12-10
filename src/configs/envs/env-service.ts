@@ -60,4 +60,7 @@ export class EnvService {
   getJwtRefreshExpirationMs(): number {
     return parseExpirationToMs(this.getJwtRefreshExpiration());
   }
+  getDefaultPassword(): string {
+    return process.env.DEFAULT_PASSWORD || '';
+  }
 }

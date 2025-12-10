@@ -11,29 +11,26 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse as ApiResponseSwagger,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
-import { SpecialtyService } from './specialty.service';
-import { CreateSpecialtyDto, UpdateSpecialtyDto, QuerySpecialtyDto } from './dto';
-import { ApiResponse, PaginatedResponse, UserRole } from '../common';
-import { JwtAuthGuard, RolesGuard } from '../auth/guards';
-import { Roles } from '../auth/decorators';
+import { ApiTags, ApiOperation, ApiResponse as ApiResponseSwagger, ApiBearerAuth } from '@nestjs/swagger';
+import { SpecialtyService } from '../../specialty/specialty.service';
+import { CreateSpecialtyDto, UpdateSpecialtyDto, QuerySpecialtyDto } from '../../specialty/dto';
+import { ApiResponse, PaginatedResponse } from '../../common/dto';
+import { UserRole } from '../../common/constants';
+import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
+import { Roles } from '../../auth/decorators';
 
-@ApiTags('Specialties')
+@ApiTags('Admin - Specialty Management')
 @ApiBearerAuth('JWT-auth')
-@Controller('specialties')
 @UseGuards(JwtAuthGuard, RolesGuard)
-export class SpecialtyController {
+@Roles(UserRole.ADMIN)
+@Controller('admin/specialties')
+export class AdminSpecialtyController {
   constructor(private readonly specialtyService: SpecialtyService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new specialty (ADMIN only)' })
+  @ApiOperation({ summary: 'Create a new specialty' })
+  @ApiResponseSwagger({ status: 201, description: 'Specialty created successfully' })
   @ApiResponseSwagger({ status: 409, description: 'Specialty name already exists' })
   async create(@Body() createSpecialtyDto: CreateSpecialtyDto) {
     const specialty = await this.specialtyService.create(createSpecialtyDto);
@@ -41,16 +38,16 @@ export class SpecialtyController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.DOCTOR)
-  @ApiOperation({ summary: 'Get all specialties with pagination (ADMIN, DOCTOR)' })
+  @ApiOperation({ summary: 'Get all specialties with pagination' })
+  @ApiResponseSwagger({ status: 200, description: 'Specialties retrieved successfully' })
   async findAll(@Query() query: QuerySpecialtyDto) {
     const result = await this.specialtyService.findAll(query);
     return PaginatedResponse.create(result.data, result.total, query, 'Specialties retrieved successfully');
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.DOCTOR)
-  @ApiOperation({ summary: 'Get a specialty by ID (ADMIN, DOCTOR)' })
+  @ApiOperation({ summary: 'Get a specialty by ID' })
+  @ApiResponseSwagger({ status: 200, description: 'Specialty retrieved successfully' })
   @ApiResponseSwagger({ status: 404, description: 'Specialty not found' })
   async findOne(@Param('id') id: string) {
     const specialty = await this.specialtyService.findOne(id);
@@ -58,8 +55,8 @@ export class SpecialtyController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update a specialty (ADMIN only)' })
+  @ApiOperation({ summary: 'Update a specialty' })
+  @ApiResponseSwagger({ status: 200, description: 'Specialty updated successfully' })
   @ApiResponseSwagger({ status: 404, description: 'Specialty not found' })
   @ApiResponseSwagger({ status: 409, description: 'Specialty name already exists' })
   async update(@Param('id') id: string, @Body() updateSpecialtyDto: UpdateSpecialtyDto) {
@@ -68,13 +65,12 @@ export class SpecialtyController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Delete a specialty (ADMIN only)' })
+  @ApiOperation({ summary: 'Delete a specialty' })
+  @ApiResponseSwagger({ status: 200, description: 'Specialty deleted successfully' })
   @ApiResponseSwagger({ status: 404, description: 'Specialty not found' })
   async remove(@Param('id') id: string) {
     const specialty = await this.specialtyService.remove(id);
     return ApiResponse.success(specialty, 'Specialty deleted successfully');
   }
 }
-

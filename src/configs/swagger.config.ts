@@ -17,8 +17,6 @@ export function setupSwagger(app: INestApplication): void {
       },
       'JWT-auth',
     )
-    .addTag('Auth', 'Authentication endpoints')
-    .addTag('Departments', 'Department management endpoints')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

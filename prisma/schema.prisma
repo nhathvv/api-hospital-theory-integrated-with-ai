@@ -33,6 +33,12 @@ enum ExaminationType {
   ONLINE
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -42,13 +48,14 @@ model User {
   fullName  String?
   avatar    String?
   address   String?
-  role      UserRole @default(ADMIN)
+  role      UserRole @default(PATIENT)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   refreshTokens RefreshToken[]
   doctor        Doctor?
+  patient       Patient?
 
   @@map("users")
 }
@@ -207,4 +214,25 @@ model DoctorTimeSlot {
   @@index([scheduleId])
   @@index([dayOfWeek])
   @@map("doctor_time_slots")
+}
+
+model Patient {
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  height                Float?
+  weight                Float?
+  bloodType             String?
+  allergies             String?
+  dateOfBirth           DateTime?
+  gender                Gender?
+  healthInsuranceNumber String?
+  emergencyContact      String?
+  deletedAt             DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("patients")
 }
