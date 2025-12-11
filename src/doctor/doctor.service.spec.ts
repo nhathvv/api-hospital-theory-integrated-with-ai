@@ -6,6 +6,7 @@ import { UserService } from '../user';
 import { CreateDoctorDto } from './dto';
 import { DoctorStatus } from '@prisma/client';
 import { UserRole } from '../common/constants';
+import { EnvService } from '../configs/envs/env-service';
 import * as bcrypt from 'bcrypt';
 
 jest.mock('bcrypt');
@@ -19,6 +20,7 @@ describe('DoctorService - create', () => {
   let service: DoctorService;
   let prismaService: PrismaService;
   let userService: UserService;
+  let envService: EnvService;
 
   const mockPrismaService = {
     doctor: {
@@ -37,7 +39,13 @@ describe('DoctorService - create', () => {
     createUserInTransaction: jest.fn(),
   };
 
+  const mockEnvService = {
+    getDefaultPassword: jest.fn().mockReturnValue('defaultTestPassword123'),
+  };
+
   beforeEach(async () => {
+    jest.spyOn(EnvService, 'getInstance').mockReturnValue(mockEnvService as any);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DoctorService,
@@ -55,6 +63,7 @@ describe('DoctorService - create', () => {
     service = module.get<DoctorService>(DoctorService);
     prismaService = module.get<PrismaService>(PrismaService);
     userService = module.get<UserService>(UserService);
+    envService = EnvService.getInstance();
   });
 
   afterEach(() => {
@@ -202,8 +211,8 @@ describe('DoctorService - create', () => {
         const result = await service.create(validCreateDoctorDto);
 
         expect(result).toBeDefined();
-        expect(result.temporaryPassword).toBeDefined();
-        expect(result.temporaryPassword).toHaveLength(16);
+        expect(result.defaultPassword).toBeDefined();
+        expect(result.defaultPassword).toBe('defaultTestPassword123');
         expect(result.user.email).toBe(validCreateDoctorDto.email);
         expect(result.user.role).toBe(UserRole.DOCTOR);
         expect(result.educations).toHaveLength(1);
@@ -232,7 +241,8 @@ describe('DoctorService - create', () => {
             role: UserRole.DOCTOR,
           }),
         );
-        expect(bcrypt.hash).toHaveBeenCalledWith(expect.any(String), 10);
+        expect(envService.getDefaultPassword).toHaveBeenCalled();
+        expect(bcrypt.hash).toHaveBeenCalledWith('defaultTestPassword123', 10);
         expect(prismaService.doctor.create).toHaveBeenCalledWith(
           expect.objectContaining({
             data: expect.objectContaining({
@@ -341,7 +351,8 @@ describe('DoctorService - create', () => {
         const result = await service.create(minimalDto);
 
         expect(result).toBeDefined();
-        expect(result.temporaryPassword).toBeDefined();
+        expect(result.defaultPassword).toBeDefined();
+        expect(result.defaultPassword).toBe('defaultTestPassword123');
         expect(result.awards).toHaveLength(0);
         expect(result.subSpecialty).toBeNull();
         expect(result.professionalTitle).toBeNull();
@@ -617,7 +628,7 @@ describe('DoctorService - create', () => {
     });
 
     describe('Password generation and hashing', () => {
-      it('should generate temporary password with correct length', async () => {
+      it('should use default password from env service', async () => {
         mockUserService.findByEmail.mockResolvedValue(null);
         mockPrismaService.specialty.findUnique.mockResolvedValue(mockSpecialty);
         mockPrismaService.doctorCertification.findMany.mockResolvedValue([]);
@@ -657,8 +668,9 @@ describe('DoctorService - create', () => {
 
         const result = await service.create(validCreateDoctorDto);
 
-        expect(result.temporaryPassword).toHaveLength(16);
-        expect(bcrypt.hash).toHaveBeenCalledWith(result.temporaryPassword, 10);
+        expect(result.defaultPassword).toBe('defaultTestPassword123');
+        expect(envService.getDefaultPassword).toHaveBeenCalled();
+        expect(bcrypt.hash).toHaveBeenCalledWith('defaultTestPassword123', 10);
       });
 
       it('should hash password before creating user', async () => {
@@ -701,7 +713,8 @@ describe('DoctorService - create', () => {
 
         await service.create(validCreateDoctorDto);
 
-        expect(bcrypt.hash).toHaveBeenCalledWith(expect.any(String), 10);
+        expect(envService.getDefaultPassword).toHaveBeenCalled();
+        expect(bcrypt.hash).toHaveBeenCalledWith('defaultTestPassword123', 10);
         expect(userService.createUserInTransaction).toHaveBeenCalledWith(
           expect.anything(),
           expect.objectContaining({

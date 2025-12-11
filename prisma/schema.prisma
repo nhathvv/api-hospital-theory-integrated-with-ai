@@ -39,6 +39,46 @@ enum Gender {
   OTHER
 }
 
+/// Trạng thái lịch hẹn
+enum AppointmentStatus {
+  PENDING     /// Chờ xác nhận
+  CONFIRMED   /// Đã xác nhận
+  IN_PROGRESS /// Đang khám
+  COMPLETED   /// Hoàn thành
+  CANCELLED   /// Đã hủy
+  NO_SHOW     /// Không đến khám
+}
+
+/// Lý do hủy lịch hẹn
+enum CancellationReason {
+  PATIENT_REQUEST    /// Bệnh nhân yêu cầu hủy
+  DOCTOR_UNAVAILABLE /// Bác sĩ không có mặt
+  EMERGENCY          /// Trường hợp khẩn cấp
+  SCHEDULE_CONFLICT  /// Xung đột lịch trình
+  OTHER              /// Lý do khác
+}
+
+/// Đơn vị tính thuốc
+enum MedicineUnit {
+  TABLET  /// Viên nén
+  CAPSULE /// Viên nang
+  SACHET  /// Gói
+  BOTTLE  /// Chai
+  TUBE    /// Tuýp
+  AMPOULE /// Ống tiêm
+  VIAL    /// Lọ
+  BOX     /// Hộp
+}
+
+/// Trạng thái lô thuốc
+enum BatchStatus {
+  IN_STOCK     /// Còn hàng
+  LOW_STOCK    /// Sắp hết hàng
+  OUT_OF_STOCK /// Hết hàng
+  EXPIRED      /// Hết hạn
+  DISPOSED     /// Đã tiêu hủy
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -126,6 +166,7 @@ model Doctor {
   certifications   DoctorCertification[]
   headOfDepartment Department?           @relation("DepartmentHead")
   schedules        DoctorSchedule[]
+  appointments     Appointment[]
 
   @@index([userId])
   @@index([primarySpecialtyId])
@@ -211,6 +252,8 @@ model DoctorTimeSlot {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
+  appointments Appointment[]
+
   @@index([scheduleId])
   @@index([dayOfWeek])
   @@map("doctor_time_slots")
@@ -232,7 +275,109 @@ model Patient {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  appointments Appointment[]
+
   @@index([userId])
   @@index([deletedAt])
   @@map("patients")
+}
+
+/// Lịch hẹn khám bệnh
+model Appointment {
+  id                 String              @id @default(uuid())
+  patientId          String              /// Mã bệnh nhân
+  patient            Patient             @relation(fields: [patientId], references: [id])
+  doctorId           String              /// Mã bác sĩ
+  doctor             Doctor              @relation(fields: [doctorId], references: [id])
+  timeSlotId         String              /// Mã khung giờ
+  timeSlot           DoctorTimeSlot      @relation(fields: [timeSlotId], references: [id])
+  appointmentDate    DateTime            @db.Date /// Ngày hẹn khám
+  status             AppointmentStatus   @default(PENDING) /// Trạng thái lịch hẹn
+  examinationType    ExaminationType     /// Loại hình khám (trực tiếp/online)
+  symptoms           String?             /// Triệu chứng ban đầu
+  notes              String?             /// Ghi chú của bệnh nhân
+  diagnosis          String?             /// Chẩn đoán của bác sĩ
+  prescription       String?             /// Đơn thuốc
+  cancelledAt        DateTime?           /// Thời điểm hủy
+  cancelledById      String?             /// Người hủy lịch hẹn
+  cancellationReason CancellationReason? /// Lý do hủy
+  cancellationNote   String?             /// Ghi chú khi hủy
+  consultationFee    Int?                /// Phí khám bệnh
+  completedAt        DateTime?           /// Thời điểm hoàn thành
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  documents AppointmentDocument[] /// Tài liệu y tế đính kèm
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([timeSlotId])
+  @@index([appointmentDate])
+  @@index([status])
+  @@map("appointments")
+}
+
+/// Tài liệu y tế của lịch hẹn (kết quả xét nghiệm, X-quang, MRI, ...)
+model AppointmentDocument {
+  id            String      @id @default(uuid())
+  appointmentId String      /// Mã lịch hẹn
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  title         String      /// Tiêu đề tài liệu
+  documentType  String      /// Loại tài liệu (LAB_RESULT, X_RAY, MRI, PRESCRIPTION, ...)
+  documentUrl   String      /// Đường dẫn file
+  uploadedById  String      /// Người tải lên (userId)
+  notes         String?     /// Ghi chú
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([appointmentId])
+  @@map("appointment_documents")
+}
+/// Thuốc
+model Medicine {
+  id                   String       @id @default(uuid())
+  name                 String       /// Tên thuốc (Paracetamol 500mg)
+  code                 String       @unique /// Mã thuốc
+  activeIngredient     String?      /// Hoạt chất
+  description          String?      /// Mô tả / Công dụng (Giảm đau, hạ sốt)
+  unit                 MedicineUnit /// Đơn vị tính (Tablets, Capsules, ...)
+  dosage               String?      /// Hàm lượng (500mg, 100ml, ...)
+  manufacturer         String?      /// Nhà sản xuất
+  category             String?      /// Nhóm thuốc (Kháng sinh, Giảm đau, ...)
+  lowStockThreshold    Int          @default(100) /// Ngưỡng cảnh báo sắp hết hàng
+  requiresPrescription Boolean      @default(false) /// Thuốc kê đơn
+  isActive             Boolean      @default(true)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  batches MedicineBatch[]
+
+  @@index([name])
+  @@index([code])
+  @@index([category])
+  @@map("medicines")
+}
+
+/// Lô thuốc nhập kho
+model MedicineBatch {
+  id              String      @id @default(uuid())
+  medicineId      String      /// Mã thuốc
+  medicine        Medicine    @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  batchNumber     String      /// Số lô (PARA-0825-01)
+  quantity        Int         /// Số lượng nhập
+  currentStock    Int         /// Số lượng tồn kho hiện tại
+  unitPrice       Int         /// Giá nhập (VND)
+  sellingPrice    Int         /// Giá bán (VND)
+  manufactureDate DateTime?   /// Ngày sản xuất
+  expiryDate      DateTime    /// Hạn sử dụng
+  status          BatchStatus @default(IN_STOCK) /// Trạng thái lô thuốc
+  notes           String?     /// Ghi chú
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([medicineId, batchNumber])
+  @@index([medicineId])
+  @@index([expiryDate])
+  @@index([status])
+  @@map("medicine_batches")
 }
