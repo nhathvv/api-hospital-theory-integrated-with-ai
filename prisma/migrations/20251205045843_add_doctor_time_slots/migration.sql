@@ -1,0 +1,1 @@
+-- Migration marked as applied (baseline)

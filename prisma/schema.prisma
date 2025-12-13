@@ -335,7 +335,7 @@ model MedicineBatch {
   medicineId      String
   /// Số lô (PARA-0825-01)
   batchNumber     String
-  /// Số lượng nhập
+  /// Số lượng nhập ban đầu
   quantity        Int
   /// Số lượng tồn kho hiện tại
   currentStock    Int
@@ -347,13 +347,19 @@ model MedicineBatch {
   manufactureDate DateTime?
   /// Hạn sử dụng
   expiryDate      DateTime
-  importDate      DateTime    @default(now())
+
+  /// Nhà sản xuất
+  manufacturer    String?
+  /// Nhà cung cấp
+  supplier        String?
+
   /// Trạng thái lô thuốc
   status          BatchStatus @default(IN_STOCK)
   /// Ghi chú
   notes           String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+
   medicine        Medicine    @relation(fields: [medicineId], references: [id], onDelete: Cascade)
 
   @@unique([medicineId, batchNumber])
@@ -362,6 +368,7 @@ model MedicineBatch {
   @@index([status])
   @@map("medicine_batches")
 }
+
 enum UserRole {
   ADMIN
   DOCTOR
