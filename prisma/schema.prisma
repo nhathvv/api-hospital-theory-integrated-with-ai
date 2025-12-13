@@ -191,6 +191,10 @@ model Patient {
   gender                Gender?
   healthInsuranceNumber String?
   emergencyContact      String?
+  /// Số CMND/CCCD
+  identityNumber        String?
+  /// Bệnh mãn tính
+  chronicDisease        String?
   deletedAt             DateTime?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt

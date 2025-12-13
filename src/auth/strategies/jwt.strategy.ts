@@ -4,6 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { EnvService } from '../../configs/envs/env-service';
 import { PrismaService } from '../../prisma';
 import { TokenPayload } from '../auth.service';
+import { UserRole } from '../../common/constants';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -18,6 +19,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: TokenPayload) {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
+      include: {
+        patient: { select: { id: true } },
+        doctor: { select: { id: true } },
+      },
     });
 
     if (!user || !user.isActive) {
@@ -28,6 +33,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       sub: payload.sub,
       email: payload.email,
       role: payload.role,
+      patientId: user.patient?.id ?? null,
+      doctorId: user.doctor?.id ?? null,
     };
   }
 }
