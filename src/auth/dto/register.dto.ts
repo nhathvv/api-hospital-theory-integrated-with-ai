@@ -37,7 +37,7 @@ export class RegisterDto {
   @IsNotEmpty()
   @MinLength(2)
   @MaxLength(100)
-  name: string;
+  username: string;
 
   @ApiPropertyOptional({ example: '0901234567', description: 'Phone number must be 10-11 digits' })
   @IsString()
@@ -46,5 +46,12 @@ export class RegisterDto {
     message: 'Phone number must be 10-11 digits',
   })
   phone?: string;
+
+  @ApiProperty({ example: 'John Doe', minLength: 2, maxLength: 100 })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(100)
+  fullName: string;
 }
 
