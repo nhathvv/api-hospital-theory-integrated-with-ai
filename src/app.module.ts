@@ -8,6 +8,7 @@ import { SpecialtyModule } from './specialty';
 import { DoctorModule } from './doctor';
 import { DoctorScheduleModule } from './doctor-schedule';
 import { PatientModule } from './patient';
+import { MedicineCategoryModule } from './medicine-category';
 import { AdminModule } from './admin';
 
 @Module({
@@ -19,6 +20,7 @@ import { AdminModule } from './admin';
     DoctorModule,
     DoctorScheduleModule,
     PatientModule,
+    MedicineCategoryModule,
     AdminModule,
   ],
   controllers: [AppController],

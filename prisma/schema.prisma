@@ -7,6 +7,361 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  phone         String?
+  role          UserRole       @default(PATIENT)
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  address       String?
+  avatar        String?
+  fullName      String?
+  username      String?
+  doctor        Doctor?
+  patient       Patient?
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+model Department {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  code        String?     @unique
+  description String?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  headId      String?     @unique
+  head        Doctor?     @relation("DepartmentHead", fields: [headId], references: [id])
+  specialties Specialty[]
+
+  @@map("departments")
+}
+
+model Specialty {
+  id           String      @id @default(uuid())
+  name         String      @unique
+  description  String?
+  departmentId String?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  doctors      Doctor[]
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  @@map("specialties")
+}
+
+model Doctor {
+  id                 String                @id @default(uuid())
+  userId             String                @unique
+  primarySpecialtyId String
+  subSpecialty       String?
+  professionalTitle  String?
+  yearsOfExperience  Int
+  consultationFee    Int
+  bio                String?
+  status             DoctorStatus          @default(ACTIVE)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  deletedAt          DateTime?
+  appointments       Appointment[]
+  headOfDepartment   Department?           @relation("DepartmentHead")
+  awards             DoctorAward[]
+  certifications     DoctorCertification[]
+  educations         DoctorEducation[]
+  schedules          DoctorSchedule[]
+  primarySpecialty   Specialty             @relation(fields: [primarySpecialtyId], references: [id])
+  user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([primarySpecialtyId])
+  @@index([deletedAt])
+  @@map("doctors")
+}
+
+model DoctorEducation {
+  id             String   @id @default(uuid())
+  doctorId       String
+  school         String
+  degree         String
+  graduationYear Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  doctor         Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId])
+  @@map("doctor_educations")
+}
+
+model DoctorAward {
+  id           String   @id @default(uuid())
+  doctorId     String
+  title        String
+  organization String
+  year         Int
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  doctor       Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId])
+  @@map("doctor_awards")
+}
+
+model DoctorCertification {
+  id               String    @id @default(uuid())
+  doctorId         String
+  certificateName  String
+  issuingAuthority String
+  licenseNumber    String
+  issueDate        DateTime
+  expiryDate       DateTime?
+  documentUrl      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  doctor           Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId])
+  @@index([licenseNumber])
+  @@map("doctor_certifications")
+}
+
+model DoctorSchedule {
+  id        String           @id @default(uuid())
+  doctorId  String
+  startDate DateTime         @db.Date
+  endDate   DateTime         @db.Date
+  timezone  String           @default("Asia/Ho_Chi_Minh")
+  isActive  Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  doctor    Doctor           @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  timeSlots DoctorTimeSlot[]
+
+  @@index([doctorId])
+  @@index([startDate, endDate])
+  @@index([isActive])
+  @@map("doctor_schedules")
+}
+
+model DoctorTimeSlot {
+  id              String          @id @default(uuid())
+  scheduleId      String
+  dayOfWeek       DayOfWeek
+  startTime       String
+  endTime         String
+  examinationType ExaminationType @default(IN_PERSON)
+  maxPatients     Int             @default(10)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  appointments    Appointment[]
+  schedule        DoctorSchedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@index([scheduleId])
+  @@index([dayOfWeek])
+  @@map("doctor_time_slots")
+}
+
+model Patient {
+  id                    String        @id @default(uuid())
+  userId                String        @unique
+  height                Float?
+  weight                Float?
+  bloodType             String?
+  allergies             String?
+  dateOfBirth           DateTime?
+  gender                Gender?
+  healthInsuranceNumber String?
+  emergencyContact      String?
+  deletedAt             DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  appointments          Appointment[]
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("patients")
+}
+
+/// Lịch hẹn khám bệnh
+model Appointment {
+  id                 String                @id @default(uuid())
+  /// Mã bệnh nhân
+  patientId          String
+  /// Mã bác sĩ
+  doctorId           String
+  /// Mã khung giờ
+  timeSlotId         String
+  /// Ngày hẹn khám
+  appointmentDate    DateTime              @db.Date
+  /// Trạng thái lịch hẹn
+  status             AppointmentStatus     @default(PENDING)
+  /// Loại hình khám (trực tiếp/online)
+  examinationType    ExaminationType
+  /// Triệu chứng ban đầu
+  symptoms           String?
+  /// Ghi chú của bệnh nhân
+  notes              String?
+  /// Chẩn đoán của bác sĩ
+  diagnosis          String?
+  /// Đơn thuốc
+  prescription       String?
+  /// Thời điểm hủy
+  cancelledAt        DateTime?
+  /// Người hủy lịch hẹn
+  cancelledById      String?
+  /// Lý do hủy
+  cancellationReason CancellationReason?
+  /// Ghi chú khi hủy
+  cancellationNote   String?
+  /// Phí khám bệnh
+  consultationFee    Int?
+  /// Thời điểm hoàn thành
+  completedAt        DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  documents          AppointmentDocument[]
+  doctor             Doctor                @relation(fields: [doctorId], references: [id])
+  patient            Patient               @relation(fields: [patientId], references: [id])
+  timeSlot           DoctorTimeSlot        @relation(fields: [timeSlotId], references: [id])
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([timeSlotId])
+  @@index([appointmentDate])
+  @@index([status])
+  @@map("appointments")
+}
+
+/// Tài liệu y tế của lịch hẹn (kết quả xét nghiệm, X-quang, MRI, ...)
+model AppointmentDocument {
+  id            String      @id @default(uuid())
+  /// Mã lịch hẹn
+  appointmentId String
+  /// Tiêu đề tài liệu
+  title         String
+  /// Loại tài liệu (LAB_RESULT, X_RAY, MRI, PRESCRIPTION, ...)
+  documentType  String
+  /// Đường dẫn file
+  documentUrl   String
+  /// Người tải lên (userId)
+  uploadedById  String
+  /// Ghi chú
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId])
+  @@map("appointment_documents")
+}
+
+/// Nhóm thuốc
+model MedicineCategory {
+  id          String   @id @default(uuid())
+  /// Tên nhóm thuốc (Kháng sinh, Giảm đau, ...)
+  name        String   @unique
+  /// Mã nhóm thuốc (ANTIBIOTICS, ANALGESICS, ...)
+  code        String   @unique
+  /// Mô tả nhóm thuốc
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  medicines Medicine[]
+
+  @@map("medicine_categories")
+}
+
+/// Thuốc
+model Medicine {
+  id                   String            @id @default(uuid())
+  /// Tên thuốc (Paracetamol 500mg)
+  name                 String
+  /// Mã thuốc
+  code                 String            @unique
+  /// Hoạt chất
+  activeIngredient     String?
+  /// Mô tả / Công dụng (Giảm đau, hạ sốt)
+  description          String?
+  /// Đơn vị tính (Tablets, Capsules, ...)
+  unit                 MedicineUnit
+  /// Hàm lượng (500mg, 100ml, ...)
+  dosage               String?
+  /// Nhà sản xuất
+  manufacturer         String?
+  /// Mã nhóm thuốc (FK)
+  categoryId           String?
+  category             MedicineCategory? @relation(fields: [categoryId], references: [id])
+  /// Ngưỡng cảnh báo sắp hết hàng
+  lowStockThreshold    Int               @default(100)
+  /// Thuốc kê đơn
+  requiresPrescription Boolean           @default(false)
+  isActive             Boolean           @default(true)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  batches              MedicineBatch[]
+
+  @@index([name])
+  @@index([code])
+  @@index([categoryId])
+  @@map("medicines")
+}
+
+/// Lô thuốc nhập kho
+model MedicineBatch {
+  id              String      @id @default(uuid())
+  /// Mã thuốc
+  medicineId      String
+  /// Số lô (PARA-0825-01)
+  batchNumber     String
+  /// Số lượng nhập
+  quantity        Int
+  /// Số lượng tồn kho hiện tại
+  currentStock    Int
+  /// Giá nhập (VND)
+  unitPrice       Int
+  /// Giá bán (VND)
+  sellingPrice    Int
+  /// Ngày sản xuất
+  manufactureDate DateTime?
+  /// Hạn sử dụng
+  expiryDate      DateTime
+  importDate      DateTime    @default(now())
+  /// Trạng thái lô thuốc
+  status          BatchStatus @default(IN_STOCK)
+  /// Ghi chú
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  medicine        Medicine    @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+
+  @@unique([medicineId, batchNumber])
+  @@index([medicineId])
+  @@index([expiryDate])
+  @@index([status])
+  @@map("medicine_batches")
+}
 enum UserRole {
   ADMIN
   DOCTOR
@@ -41,343 +396,64 @@ enum Gender {
 
 /// Trạng thái lịch hẹn
 enum AppointmentStatus {
-  PENDING     /// Chờ xác nhận
-  CONFIRMED   /// Đã xác nhận
-  IN_PROGRESS /// Đang khám
-  COMPLETED   /// Hoàn thành
-  CANCELLED   /// Đã hủy
-  NO_SHOW     /// Không đến khám
+  /// Chờ xác nhận
+  PENDING
+  /// Đã xác nhận
+  CONFIRMED
+  /// Đang khám
+  IN_PROGRESS
+  /// Hoàn thành
+  COMPLETED
+  /// Đã hủy
+  CANCELLED
+  /// Không đến khám
+  NO_SHOW
 }
 
 /// Lý do hủy lịch hẹn
 enum CancellationReason {
-  PATIENT_REQUEST    /// Bệnh nhân yêu cầu hủy
-  DOCTOR_UNAVAILABLE /// Bác sĩ không có mặt
-  EMERGENCY          /// Trường hợp khẩn cấp
-  SCHEDULE_CONFLICT  /// Xung đột lịch trình
-  OTHER              /// Lý do khác
+  /// Bệnh nhân yêu cầu hủy
+  PATIENT_REQUEST
+  /// Bác sĩ không có mặt
+  DOCTOR_UNAVAILABLE
+  /// Trường hợp khẩn cấp
+  EMERGENCY
+  /// Xung đột lịch trình
+  SCHEDULE_CONFLICT
+  /// Lý do khác
+  OTHER
 }
 
 /// Đơn vị tính thuốc
 enum MedicineUnit {
-  TABLET  /// Viên nén
-  CAPSULE /// Viên nang
-  SACHET  /// Gói
-  BOTTLE  /// Chai
-  TUBE    /// Tuýp
-  AMPOULE /// Ống tiêm
-  VIAL    /// Lọ
-  BOX     /// Hộp
+  /// Viên nén
+  TABLET
+  /// Viên nang
+  CAPSULE
+  /// Gói
+  SACHET
+  /// Chai
+  BOTTLE
+  /// Tuýp
+  TUBE
+  /// Ống tiêm
+  AMPOULE
+  /// Lọ
+  VIAL
+  /// Hộp
+  BOX
 }
 
 /// Trạng thái lô thuốc
 enum BatchStatus {
-  IN_STOCK     /// Còn hàng
-  LOW_STOCK    /// Sắp hết hàng
-  OUT_OF_STOCK /// Hết hàng
-  EXPIRED      /// Hết hạn
-  DISPOSED     /// Đã tiêu hủy
-}
-
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  username  String?
-  phone     String?
-  fullName  String?
-  avatar    String?
-  address   String?
-  role      UserRole @default(PATIENT)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  refreshTokens RefreshToken[]
-  doctor        Doctor?
-  patient       Patient?
-
-  @@map("users")
-}
-
-model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
-  @@map("refresh_tokens")
-}
-
-model Department {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  code        String?  @unique
-  description String?
-  headId      String?  @unique
-  head        Doctor?  @relation("DepartmentHead", fields: [headId], references: [id], onDelete: SetNull)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  specialties Specialty[]
-
-  @@map("departments")
-}
-
-model Specialty {
-  id           String      @id @default(uuid())
-  name         String      @unique
-  description  String?
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  isActive     Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
-  doctors Doctor[]
-
-  @@map("specialties")
-}
-
-model Doctor {
-  id                 String       @id @default(uuid())
-  userId             String       @unique
-  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  primarySpecialtyId String
-  primarySpecialty   Specialty    @relation(fields: [primarySpecialtyId], references: [id])
-  subSpecialty       String?
-  professionalTitle  String?
-  yearsOfExperience  Int
-  consultationFee    Int
-  bio                String?
-  status             DoctorStatus @default(ACTIVE)
-  deletedAt          DateTime?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-
-  educations       DoctorEducation[]
-  awards           DoctorAward[]
-  certifications   DoctorCertification[]
-  headOfDepartment Department?           @relation("DepartmentHead")
-  schedules        DoctorSchedule[]
-  appointments     Appointment[]
-
-  @@index([userId])
-  @@index([primarySpecialtyId])
-  @@index([deletedAt])
-  @@map("doctors")
-}
-
-model DoctorEducation {
-  id             String   @id @default(uuid())
-  doctorId       String
-  doctor         Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  school         String
-  degree         String
-  graduationYear Int
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@index([doctorId])
-  @@map("doctor_educations")
-}
-
-model DoctorAward {
-  id           String   @id @default(uuid())
-  doctorId     String
-  doctor       Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  title        String
-  organization String
-  year         Int
-  description  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@index([doctorId])
-  @@map("doctor_awards")
-}
-
-model DoctorCertification {
-  id               String    @id @default(uuid())
-  doctorId         String
-  doctor           Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  certificateName  String
-  issuingAuthority String
-  licenseNumber    String
-  issueDate        DateTime
-  expiryDate       DateTime?
-  documentUrl      String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-
-  @@index([doctorId])
-  @@index([licenseNumber])
-  @@map("doctor_certifications")
-}
-
-model DoctorSchedule {
-  id        String   @id @default(uuid())
-  doctorId  String
-  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  startDate DateTime @db.Date
-  endDate   DateTime @db.Date
-  timezone  String   @default("Asia/Ho_Chi_Minh")
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  timeSlots DoctorTimeSlot[]
-
-  @@index([doctorId])
-  @@index([startDate, endDate])
-  @@index([isActive])
-  @@map("doctor_schedules")
-}
-
-model DoctorTimeSlot {
-  id              String          @id @default(uuid())
-  scheduleId      String
-  schedule        DoctorSchedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  dayOfWeek       DayOfWeek
-  startTime       String
-  endTime         String
-  examinationType ExaminationType @default(IN_PERSON)
-  maxPatients     Int             @default(10)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-
-  appointments Appointment[]
-
-  @@index([scheduleId])
-  @@index([dayOfWeek])
-  @@map("doctor_time_slots")
-}
-
-model Patient {
-  id                    String    @id @default(uuid())
-  userId                String    @unique
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  height                Float?
-  weight                Float?
-  bloodType             String?
-  allergies             String?
-  dateOfBirth           DateTime?
-  gender                Gender?
-  healthInsuranceNumber String?
-  emergencyContact      String?
-  deletedAt             DateTime?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  appointments Appointment[]
-
-  @@index([userId])
-  @@index([deletedAt])
-  @@map("patients")
-}
-
-/// Lịch hẹn khám bệnh
-model Appointment {
-  id                 String              @id @default(uuid())
-  patientId          String              /// Mã bệnh nhân
-  patient            Patient             @relation(fields: [patientId], references: [id])
-  doctorId           String              /// Mã bác sĩ
-  doctor             Doctor              @relation(fields: [doctorId], references: [id])
-  timeSlotId         String              /// Mã khung giờ
-  timeSlot           DoctorTimeSlot      @relation(fields: [timeSlotId], references: [id])
-  appointmentDate    DateTime            @db.Date /// Ngày hẹn khám
-  status             AppointmentStatus   @default(PENDING) /// Trạng thái lịch hẹn
-  examinationType    ExaminationType     /// Loại hình khám (trực tiếp/online)
-  symptoms           String?             /// Triệu chứng ban đầu
-  notes              String?             /// Ghi chú của bệnh nhân
-  diagnosis          String?             /// Chẩn đoán của bác sĩ
-  prescription       String?             /// Đơn thuốc
-  cancelledAt        DateTime?           /// Thời điểm hủy
-  cancelledById      String?             /// Người hủy lịch hẹn
-  cancellationReason CancellationReason? /// Lý do hủy
-  cancellationNote   String?             /// Ghi chú khi hủy
-  consultationFee    Int?                /// Phí khám bệnh
-  completedAt        DateTime?           /// Thời điểm hoàn thành
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-
-  documents AppointmentDocument[] /// Tài liệu y tế đính kèm
-
-  @@index([patientId])
-  @@index([doctorId])
-  @@index([timeSlotId])
-  @@index([appointmentDate])
-  @@index([status])
-  @@map("appointments")
-}
-
-/// Tài liệu y tế của lịch hẹn (kết quả xét nghiệm, X-quang, MRI, ...)
-model AppointmentDocument {
-  id            String      @id @default(uuid())
-  appointmentId String      /// Mã lịch hẹn
-  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
-  title         String      /// Tiêu đề tài liệu
-  documentType  String      /// Loại tài liệu (LAB_RESULT, X_RAY, MRI, PRESCRIPTION, ...)
-  documentUrl   String      /// Đường dẫn file
-  uploadedById  String      /// Người tải lên (userId)
-  notes         String?     /// Ghi chú
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  @@index([appointmentId])
-  @@map("appointment_documents")
-}
-/// Thuốc
-model Medicine {
-  id                   String       @id @default(uuid())
-  name                 String       /// Tên thuốc (Paracetamol 500mg)
-  code                 String       @unique /// Mã thuốc
-  activeIngredient     String?      /// Hoạt chất
-  description          String?      /// Mô tả / Công dụng (Giảm đau, hạ sốt)
-  unit                 MedicineUnit /// Đơn vị tính (Tablets, Capsules, ...)
-  dosage               String?      /// Hàm lượng (500mg, 100ml, ...)
-  manufacturer         String?      /// Nhà sản xuất
-  category             String?      /// Nhóm thuốc (Kháng sinh, Giảm đau, ...)
-  lowStockThreshold    Int          @default(100) /// Ngưỡng cảnh báo sắp hết hàng
-  requiresPrescription Boolean      @default(false) /// Thuốc kê đơn
-  isActive             Boolean      @default(true)
-  createdAt            DateTime     @default(now())
-  updatedAt            DateTime     @updatedAt
-
-  batches MedicineBatch[]
-
-  @@index([name])
-  @@index([code])
-  @@index([category])
-  @@map("medicines")
-}
-
-/// Lô thuốc nhập kho
-model MedicineBatch {
-  id              String      @id @default(uuid())
-  medicineId      String      /// Mã thuốc
-  medicine        Medicine    @relation(fields: [medicineId], references: [id], onDelete: Cascade)
-  batchNumber     String      /// Số lô (PARA-0825-01)
-  quantity        Int         /// Số lượng nhập
-  currentStock    Int         /// Số lượng tồn kho hiện tại
-  unitPrice       Int         /// Giá nhập (VND)
-  sellingPrice    Int         /// Giá bán (VND)
-  manufactureDate DateTime?   /// Ngày sản xuất
-  expiryDate      DateTime    /// Hạn sử dụng
-  status          BatchStatus @default(IN_STOCK) /// Trạng thái lô thuốc
-  notes           String?     /// Ghi chú
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  @@unique([medicineId, batchNumber])
-  @@index([medicineId])
-  @@index([expiryDate])
-  @@index([status])
-  @@map("medicine_batches")
+  /// Còn hàng
+  IN_STOCK
+  /// Sắp hết hàng
+  LOW_STOCK
+  /// Hết hàng
+  OUT_OF_STOCK
+  /// Hết hạn
+  EXPIRED
+  /// Đã tiêu hủy
+  DISPOSED
 }
