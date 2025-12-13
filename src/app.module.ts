@@ -12,6 +12,7 @@ import { MedicineCategoryModule } from './medicine-category';
 import { MedicineModule } from './medicine';
 import { MedicineBatchModule } from './medicine-batch';
 import { AdminModule } from './admin';
+import { AppointmentModule } from './appointment';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AdminModule } from './admin';
     MedicineModule,
     MedicineBatchModule,
     AdminModule,
+    AppointmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

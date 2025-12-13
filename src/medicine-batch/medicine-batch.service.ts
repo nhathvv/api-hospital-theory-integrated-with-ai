@@ -1,7 +1,12 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma';
-import { CreateMedicineBatchDto, QueryMedicineBatchDto } from './dto';
+import { CreateMedicineBatchDto, QueryMedicineBatchDto, UpdateMedicineBatchDto } from './dto';
 
 @Injectable()
 export class MedicineBatchService {
@@ -44,7 +49,9 @@ export class MedicineBatchService {
   ): Prisma.MedicineBatchWhereInput {
     const { search, medicineId, categoryId, status, expiryDateBefore, expiryDateAfter } =
       query;
-    const where: Prisma.MedicineBatchWhereInput = {};
+    const where: Prisma.MedicineBatchWhereInput = {
+      deletedAt: null, // Exclude soft-deleted records
+    };
 
     if (search) {
       where.OR = [
@@ -111,6 +118,84 @@ export class MedicineBatchService {
           },
         },
       },
+    });
+  }
+
+  /**
+   * Find a medicine batch by ID
+   * @param id - Medicine batch ID
+   * @returns Medicine batch with related data
+   * @throws NotFoundException if batch not found or soft-deleted
+   */
+  async findOne(id: string) {
+    const batch = await this.prisma.medicineBatch.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        medicine: {
+          include: {
+            category: true,
+          },
+        },
+      },
+    });
+
+    if (!batch) {
+      throw new NotFoundException('Không tìm thấy lô thuốc');
+    }
+
+    return batch;
+  }
+
+  /**
+   * Update a medicine batch
+   * @param id - Medicine batch ID
+   * @param dto - Update medicine batch data
+   * @returns Updated medicine batch
+   * @throws NotFoundException if batch not found
+   * @throws ConflictException if batch number already exists
+   */
+  async update(id: string, dto: UpdateMedicineBatchDto) {
+    const existingBatch = await this.findOne(id);
+
+    // Validate unique batch number if being updated
+    if (dto.batchNumber && dto.batchNumber !== existingBatch.batchNumber) {
+      await this.validateUniqueBatchNumber(existingBatch.medicineId, dto.batchNumber, id);
+    }
+
+    // Build update data with proper date handling
+    const data: Prisma.MedicineBatchUpdateInput = {
+      ...dto,
+      ...(dto.manufactureDate !== undefined && {
+        manufactureDate: dto.manufactureDate ? new Date(dto.manufactureDate) : null,
+      }),
+      ...(dto.expiryDate && { expiryDate: new Date(dto.expiryDate) }),
+    };
+
+    return this.prisma.medicineBatch.update({
+      where: { id },
+      data,
+      include: {
+        medicine: {
+          include: {
+            category: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Soft delete a medicine batch
+   * @param id - Medicine batch ID
+   * @returns Updated medicine batch with deletedAt timestamp
+   * @throws NotFoundException if batch not found
+   */
+  async softDelete(id: string) {
+    await this.findOne(id);
+
+    return this.prisma.medicineBatch.update({
+      where: { id },
+      data: { deletedAt: new Date() },
     });
   }
 

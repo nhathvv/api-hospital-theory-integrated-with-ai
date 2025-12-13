@@ -34,6 +34,8 @@ export class PatientService {
         gender: true,
         healthInsuranceNumber: true,
         emergencyContact: true,
+        identityNumber: true,
+        chronicDisease: true,
       },
     });
   }
