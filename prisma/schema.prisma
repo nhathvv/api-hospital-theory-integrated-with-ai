@@ -357,6 +357,8 @@ model MedicineBatch {
   status          BatchStatus @default(IN_STOCK)
   /// Ghi chú
   notes           String?
+  /// Thời điểm xóa mềm
+  deletedAt       DateTime?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -366,6 +368,7 @@ model MedicineBatch {
   @@index([medicineId])
   @@index([expiryDate])
   @@index([status])
+  @@index([deletedAt])
   @@map("medicine_batches")
 }
 

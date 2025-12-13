@@ -2,8 +2,10 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Body,
   Query,
+  Param,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -59,5 +61,33 @@ export class AdminMedicineBatchController {
   async create(@Body() dto: CreateMedicineBatchDto) {
     const medicineBatch = await this.medicineBatchService.create(dto);
     return ApiResponse.success(medicineBatch, 'Tạo lô thuốc thành công', 201);
+  }
+  
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Lấy thông tin lô thuốc' })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Lấy thông tin lô thuốc thành công',
+  })
+  async findOne(@Param('id') id: string) {
+    const medicineBatch = await this.medicineBatchService.findOne(id);
+    return ApiResponse.success(medicineBatch, 'Lấy thông tin lô thuốc thành công');
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Xóa mềm lô thuốc' })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Xóa lô thuốc thành công',
+  })
+  @ApiResponseSwagger({
+    status: 404,
+    description: 'Không tìm thấy lô thuốc',
+  })
+  async softDelete(@Param('id') id: string) {
+    await this.medicineBatchService.softDelete(id);
+    return ApiResponse.success(null, 'Xóa lô thuốc thành công');
   }
 }
