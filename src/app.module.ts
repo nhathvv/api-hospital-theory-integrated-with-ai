@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma';
@@ -14,9 +16,18 @@ import { MedicineBatchModule } from './medicine-batch';
 import { AdminModule } from './admin';
 import { AppointmentModule } from './appointment';
 import { PaymentModule } from './payment/payment.module';
+import { EnvService } from './configs/envs/env-service';
+
+const envService = EnvService.getInstance();
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: envService.getThrottleTtl(),
+        limit: envService.getThrottleLimit(),
+      },
+    ]),
     PrismaModule,
     AuthModule,
     DepartmentModule,
@@ -32,6 +43,12 @@ import { PaymentModule } from './payment/payment.module';
     PaymentModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

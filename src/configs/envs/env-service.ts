@@ -66,4 +66,10 @@ export class EnvService {
   getPaymentApiKey(): string {
     return process.env.PAYMENT_API_KEY || '';
   }
+  getThrottleTtl(): number {
+    return Number(process.env.THROTTLE_TTL) || 60000;
+  }
+  getThrottleLimit(): number {
+    return Number(process.env.THROTTLE_LIMIT) || 10;
+  }
 }
