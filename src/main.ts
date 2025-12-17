@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { config } from 'dotenv';
 import { EnvService } from './configs/envs/env-service';
@@ -12,6 +13,7 @@ async function bootstrap() {
   }
   EnvService.getInstance().validate(process.env);
   const app = await NestFactory.create(AppModule);
+  app.use(helmet());
   app.enableCors({
     origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
