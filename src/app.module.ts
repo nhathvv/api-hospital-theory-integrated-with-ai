@@ -13,6 +13,7 @@ import { MedicineModule } from './medicine';
 import { MedicineBatchModule } from './medicine-batch';
 import { AdminModule } from './admin';
 import { AppointmentModule } from './appointment';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AppointmentModule } from './appointment';
     MedicineBatchModule,
     AdminModule,
     AppointmentModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

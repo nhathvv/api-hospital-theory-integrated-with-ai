@@ -63,4 +63,7 @@ export class EnvService {
   getDefaultPassword(): string {
     return process.env.DEFAULT_PASSWORD || '';
   }
+  getPaymentApiKey(): string {
+    return process.env.PAYMENT_API_KEY || '';
+  }
 }

@@ -9,7 +9,7 @@ import {
   MaxLength,
   IsDateString,
 } from 'class-validator';
-import { ExaminationType } from '@prisma/client';
+import { ExaminationType, PaymentMethod } from '@prisma/client';
 
 /**
  * DTO tạo lịch hẹn khám bệnh
@@ -67,4 +67,13 @@ export class CreateAppointmentDto {
   @IsString({ message: 'Ghi chú phải là chuỗi ký tự' })
   @MaxLength(500, { message: 'Ghi chú không được vượt quá 500 ký tự' })
   notes?: string;
+
+  @ApiProperty({
+    description: 'Phương thức thanh toán',
+    enum: PaymentMethod,
+    example: PaymentMethod.BANK_TRANSFER,
+  })
+  @IsNotEmpty({ message: 'Phương thức thanh toán không được để trống' })
+  @IsEnum(PaymentMethod, { message: 'Phương thức thanh toán không hợp lệ' })
+  paymentMethod: PaymentMethod;
 }

@@ -28,5 +28,9 @@ class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   DEFAULT_PASSWORD: string;
+
+  @IsString()
+  @IsNotEmpty()
+  PAYMENT_API_KEY: string;
 }
 export default EnvironmentVariables;

@@ -8,6 +8,8 @@ import {
 import { PrismaService } from '../prisma';
 import { CreateAppointmentDto } from './dto';
 import { AppointmentStatus, DayOfWeek, DoctorStatus } from '@prisma/client';
+import { PaymentStatus } from 'src/payment/enum';
+import { TransactionUtil, CodeGeneratorUtils } from '../common/utils';
 
 /**
  * Appointment Service
@@ -38,9 +40,8 @@ export class AppointmentService {
    * @returns Lịch hẹn mới với trạng thái PENDING
    */
   async create(patientId: string, createDto: CreateAppointmentDto) {
-    const { doctorId, timeSlotId, appointmentDate, examinationType, symptoms, notes } = createDto;
+    const { doctorId, timeSlotId, appointmentDate, examinationType, symptoms, notes, paymentMethod } = createDto;
 
-    // Validate dữ liệu và business rules
     const { consultationFee } = await this.validateAndGetData(
       patientId,
       doctorId,
@@ -48,21 +49,37 @@ export class AppointmentService {
       appointmentDate,
     );
 
-    // Tạo lịch hẹn mới với trạng thái PENDING
-    const appointment = await this.prisma.appointment.create({
-      data: {
-        patientId,
-        doctorId,
-        timeSlotId,
-        appointmentDate: new Date(appointmentDate),
-        examinationType,
-        symptoms,
-        notes,
-        consultationFee,
-        status: AppointmentStatus.PENDING,
+    const appointment = await TransactionUtil.executeInTransaction(
+      this.prisma,
+      async (tx) => {
+        const newAppointment = await tx.appointment.create({
+          data: {
+            patientId,
+            doctorId,
+            timeSlotId,
+            appointmentDate: new Date(appointmentDate),
+            examinationType,
+            symptoms,
+            notes,
+            consultationFee,
+            status: AppointmentStatus.PENDING,
+          },
+          include: this.getAppointmentIncludes(),
+        });
+
+        const paymentCode = await this.generatePaymentCode(tx);
+        await tx.payment.create({
+          data: {
+            appointmentId: newAppointment.id,
+            paymentCode,
+            status: PaymentStatus.PENDING,
+            method: paymentMethod,
+          },
+        });
+
+        return newAppointment;
       },
-      include: this.getAppointmentIncludes(),
-    });
+    );
 
     this.logger.log(
       `Appointment created: ${appointment.id} for patient ${patientId} with doctor ${doctorId}`,
@@ -191,27 +208,22 @@ export class AppointmentService {
     if (!timeSlot) {
       throw new NotFoundException('Không tìm thấy khung giờ khám');
     }
-
     // Kiểm tra time slot thuộc đúng bác sĩ
     if (timeSlot.schedule.doctorId !== doctorId) {
       throw new BadRequestException('Khung giờ không thuộc bác sĩ được chọn');
     }
-
     // BR-08: Kiểm tra schedule đang active
     if (!timeSlot.schedule.isActive) {
       throw new BadRequestException('Lịch làm việc không còn hoạt động. Vui lòng chọn khung giờ khác');
     }
-
     // Kiểm tra ngày đặt lịch nằm trong khoảng startDate - endDate của schedule
     const targetDate = new Date(appointmentDate);
     const scheduleStartDate = new Date(timeSlot.schedule.startDate);
     const scheduleEndDate = new Date(timeSlot.schedule.endDate);
-
     // Reset time for date comparison
     targetDate.setHours(0, 0, 0, 0);
     scheduleStartDate.setHours(0, 0, 0, 0);
     scheduleEndDate.setHours(23, 59, 59, 999);
-
     if (targetDate < scheduleStartDate || targetDate > scheduleEndDate) {
       throw new BadRequestException(
         'Ngày đặt lịch không nằm trong khoảng thời gian làm việc của bác sĩ',
@@ -389,5 +401,20 @@ export class AppointmentService {
       [DayOfWeek.SUNDAY]: 'Chủ Nhật',
     };
     return dayMap[dayOfWeek];
+  }
+
+  private async generatePaymentCode(tx: Parameters<Parameters<typeof TransactionUtil.executeInTransaction>[1]>[0]): Promise<string> {
+    const todayPrefix = CodeGeneratorUtils.getTodayPrefix();
+    const lastPayment = await tx.payment.findFirst({
+      where: { paymentCode: { startsWith: todayPrefix } },
+      orderBy: { paymentCode: 'desc' },
+      select: { paymentCode: true },
+    });
+    let sequence = 1;
+    if (lastPayment?.paymentCode) {
+      const lastSequence = parseInt(lastPayment.paymentCode.slice(-3), 10);
+      sequence = lastSequence + 1;
+    }
+    return CodeGeneratorUtils.generatePaymentCode(sequence);
   }
 }
