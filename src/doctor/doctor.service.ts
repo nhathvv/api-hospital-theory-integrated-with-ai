@@ -2,7 +2,7 @@ import { Injectable, ConflictException, NotFoundException, Logger } from '@nestj
 import { PrismaService } from '../prisma';
 import { CreateDoctorDto, QueryDoctorDto } from './dto';
 import { UserService } from '../user';
-import { TransactionUtil } from '../common/utils';
+import { TransactionUtils } from '../common/utils';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/common/constants';
 import { DoctorStatus, Prisma, DayOfWeek } from '@prisma/client';
@@ -23,7 +23,7 @@ export class DoctorService {
     const defaultPassword = this.envService.getDefaultPassword();
     const hashedPassword = await bcrypt.hash(defaultPassword, 10);
     this.logger.log(`Created doctor account with default password: ${createDoctorDto.email}`);
-    const doctor = await TransactionUtil.executeInTransaction(this.prisma, async (tx) => {
+    const doctor = await TransactionUtils.executeInTransaction(this.prisma, async (tx) => {
       const user = await this.userService.createUserInTransaction(tx, {
         email: createDoctorDto.email,
         password: hashedPassword,

@@ -11,7 +11,7 @@ import * as bcrypt from 'bcrypt';
 
 jest.mock('bcrypt');
 jest.mock('../common/utils/transaction.util', () => ({
-  TransactionUtil: {
+  TransactionUtils: {
     executeInTransaction: jest.fn((prisma, callback) => callback(prisma)),
   },
 }));

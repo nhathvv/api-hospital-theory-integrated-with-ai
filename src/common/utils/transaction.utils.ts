@@ -4,8 +4,8 @@ import { Prisma } from '@prisma/client';
 
 export type TransactionClient = Prisma.TransactionClient;
 
-export class TransactionUtil {
-  private static readonly logger = new Logger(TransactionUtil.name);
+export class TransactionUtils {
+  private static readonly logger = new Logger(TransactionUtils.name);
 
   static async executeInTransaction<T>(
     prisma: PrismaService,

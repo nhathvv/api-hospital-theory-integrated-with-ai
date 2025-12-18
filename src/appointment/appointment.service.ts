@@ -10,7 +10,7 @@ import { PrismaService } from '../prisma';
 import { CreateAppointmentDto, QueryAppointmentDto, CancelAppointmentDto } from './dto';
 import { AppointmentStatus, DayOfWeek, DoctorStatus, CancellationReason } from '@prisma/client';
 import { PaymentStatus } from 'src/payment/enum';
-import { TransactionUtil, CodeGeneratorUtils } from '../common/utils';
+import { TransactionUtils, CodeGeneratorUtils } from '../common/utils';
 
 /**
  * Appointment Service
@@ -50,7 +50,7 @@ export class AppointmentService {
       appointmentDate,
     );
 
-    const result = await TransactionUtil.executeInTransaction(
+    const result = await TransactionUtils.executeInTransaction(
       this.prisma,
       async (tx) => {
         const newAppointment = await tx.appointment.create({
@@ -222,7 +222,7 @@ export class AppointmentService {
       );
     }
 
-    const result = await TransactionUtil.executeInTransaction(
+    const result = await TransactionUtils.executeInTransaction(
       this.prisma,
       async (tx) => {
         const updatedAppointment = await tx.appointment.update({
@@ -647,7 +647,7 @@ export class AppointmentService {
     return dayMap[dayOfWeek];
   }
 
-  private async generatePaymentCode(tx: Parameters<Parameters<typeof TransactionUtil.executeInTransaction>[1]>[0]): Promise<string> {
+  private async generatePaymentCode(tx: Parameters<Parameters<typeof TransactionUtils.executeInTransaction>[1]>[0]): Promise<string> {
     const todayPrefix = CodeGeneratorUtils.getTodayPrefix();
     const lastPayment = await tx.payment.findFirst({
       where: { paymentCode: { startsWith: todayPrefix } },
