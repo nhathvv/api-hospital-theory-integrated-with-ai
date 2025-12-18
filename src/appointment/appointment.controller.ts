@@ -62,10 +62,21 @@ export class AppointmentController {
           doctor: {
             id: '550e8400-e29b-41d4-a716-446655440001',
             name: 'BS. Nguyễn Văn A',
-            specialty: 'Nội khoa',
+            email: 'doctor@example.com',
+            phone: '0901234567',
+            avatar: 'https://example.com/avatar.jpg',
+            professionalTitle: 'Thạc sĩ, Bác sĩ',
+            yearsOfExperience: 10,
+            bio: 'Chuyên gia về nội khoa với 10 năm kinh nghiệm',
+            specialty: {
+              id: '550e8400-e29b-41d4-a716-446655440004',
+              name: 'Nội khoa',
+            },
           },
           timeSlot: {
             id: '550e8400-e29b-41d4-a716-446655440002',
+            date: '2024-12-16',
+            dayOfWeek: 'MONDAY',
             startTime: '08:00',
             endTime: '08:30',
           },

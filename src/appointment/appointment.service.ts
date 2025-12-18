@@ -324,9 +324,15 @@ export class AppointmentService {
         select: {
           id: true,
           consultationFee: true,
+          yearsOfExperience: true,
+          professionalTitle: true,
+          bio: true,
           user: {
             select: {
               fullName: true,
+              email: true,
+              phone: true,
+              avatar: true,
             },
           },
           primarySpecialty: {
@@ -354,6 +360,7 @@ export class AppointmentService {
           id: true,
           startTime: true,
           endTime: true,
+          dayOfWeek: true,
           examinationType: true,
         },
       },
@@ -372,10 +379,21 @@ export class AppointmentService {
       doctor: {
         id: appointment.doctor.id,
         name: appointment.doctor.user.fullName,
-        specialty: appointment.doctor.primarySpecialty.name,
+        email: appointment.doctor.user.email,
+        phone: appointment.doctor.user.phone,
+        avatar: appointment.doctor.user.avatar,
+        professionalTitle: appointment.doctor.professionalTitle,
+        yearsOfExperience: appointment.doctor.yearsOfExperience,
+        bio: appointment.doctor.bio,
+        specialty: {
+          id: appointment.doctor.primarySpecialty.id,
+          name: appointment.doctor.primarySpecialty.name,
+        },
       },
       timeSlot: {
         id: appointment.timeSlot.id,
+        date: appointment.appointmentDate.toISOString().split('T')[0],
+        dayOfWeek: appointment.timeSlot.dayOfWeek,
         startTime: appointment.timeSlot.startTime,
         endTime: appointment.timeSlot.endTime,
       },
