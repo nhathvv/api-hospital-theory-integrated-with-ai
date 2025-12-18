@@ -238,7 +238,6 @@ export class AppointmentService {
         `Khung giờ này chỉ có vào ngày ${this.getDayOfWeekVietnamese(timeSlot.dayOfWeek)}`,
       );
     }
-
     return timeSlot;
   }
 
