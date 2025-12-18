@@ -3,11 +3,12 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma';
-import { CreateAppointmentDto, QueryAppointmentDto } from './dto';
-import { AppointmentStatus, DayOfWeek, DoctorStatus } from '@prisma/client';
+import { CreateAppointmentDto, QueryAppointmentDto, CancelAppointmentDto } from './dto';
+import { AppointmentStatus, DayOfWeek, DoctorStatus, CancellationReason } from '@prisma/client';
 import { PaymentStatus } from 'src/payment/enum';
 import { TransactionUtil, CodeGeneratorUtils } from '../common/utils';
 
@@ -150,6 +151,140 @@ export class AppointmentService {
     );
 
     return { data, totalItems };
+  }
+
+  async findById(appointmentId: string) {
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        ...this.getAppointmentIncludes(),
+        payment: {
+          select: {
+            id: true,
+            paymentCode: true,
+            method: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Không tìm thấy lịch hẹn');
+    }
+
+    return this.formatAppointmentResponse(appointment, appointment.payment);
+  }
+
+  async cancel(
+    appointmentId: string,
+    userId: string,
+    cancelDto: CancelAppointmentDto,
+  ) {
+    const { reason, note } = cancelDto;
+
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        patient: {
+          select: {
+            id: true,
+            userId: true,
+          },
+        },
+        doctor: {
+          select: {
+            id: true,
+            userId: true,
+          },
+        },
+        payment: {
+          select: {
+            id: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Không tìm thấy lịch hẹn');
+    }
+
+    if (appointment.patient.userId !== userId && appointment.doctor.userId !== userId) {
+      throw new ForbiddenException('Bạn không có quyền hủy lịch hẹn này');
+    }
+
+    const cancellableStatuses: AppointmentStatus[] = [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED];
+    if (!cancellableStatuses.includes(appointment.status)) {
+      throw new BadRequestException(
+        `Không thể hủy lịch hẹn với trạng thái ${this.getStatusVietnamese(appointment.status)}`,
+      );
+    }
+
+    const result = await TransactionUtil.executeInTransaction(
+      this.prisma,
+      async (tx) => {
+        const updatedAppointment = await tx.appointment.update({
+          where: { id: appointmentId },
+          data: {
+            status: AppointmentStatus.CANCELLED,
+            cancelledAt: new Date(),
+            cancelledById: userId,
+            cancellationReason: reason,
+            cancellationNote: note,
+          },
+          include: {
+            ...this.getAppointmentIncludes(),
+            payment: {
+              select: {
+                id: true,
+                paymentCode: true,
+                method: true,
+                status: true,
+              },
+            },
+          },
+        });
+
+        if (appointment.payment && appointment.payment.status === PaymentStatus.PENDING) {
+          await tx.payment.update({
+            where: { id: appointment.payment.id },
+            data: { status: PaymentStatus.FAILED },
+          });
+        }
+
+        return updatedAppointment;
+      },
+    );
+
+    this.logger.log(
+      `Appointment cancelled: ${appointmentId} by user ${userId}, reason: ${reason}`,
+    );
+
+    return this.formatCancelledAppointmentResponse(result, result.payment);
+  }
+
+  private getStatusVietnamese(status: AppointmentStatus): string {
+    const statusMap: Record<AppointmentStatus, string> = {
+      [AppointmentStatus.PENDING]: 'Chờ xác nhận',
+      [AppointmentStatus.CONFIRMED]: 'Đã xác nhận',
+      [AppointmentStatus.IN_PROGRESS]: 'Đang khám',
+      [AppointmentStatus.COMPLETED]: 'Hoàn thành',
+      [AppointmentStatus.CANCELLED]: 'Đã hủy',
+      [AppointmentStatus.NO_SHOW]: 'Không đến khám',
+    };
+    return statusMap[status];
+  }
+
+  private formatCancelledAppointmentResponse(appointment: any, payment?: any) {
+    const response = this.formatAppointmentResponse(appointment, payment);
+    return {
+      ...response,
+      cancelledAt: appointment.cancelledAt?.toISOString(),
+      cancellationReason: appointment.cancellationReason,
+      cancellationNote: appointment.cancellationNote,
+    };
   }
 
   /**

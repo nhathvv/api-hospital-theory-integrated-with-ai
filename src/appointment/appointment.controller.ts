@@ -1,12 +1,13 @@
-import { Controller, Post, Get, Body, Query, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Query, Param, UseGuards, ForbiddenException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse as ApiResponseSwagger,
   ApiBearerAuth,
+  ApiParam,
 } from '@nestjs/swagger';
 import { AppointmentService } from './appointment.service';
-import { CreateAppointmentDto, QueryAppointmentDto } from './dto';
+import { CreateAppointmentDto, QueryAppointmentDto, CancelAppointmentDto } from './dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles, CurrentUser } from '../auth/decorators';
 import { UserRole } from '../common/constants';
@@ -185,5 +186,113 @@ export class AppointmentController {
       createAppointmentDto,
     );
     return ApiResponse.success(appointment, 'Tạo lịch hẹn thành công', 201);
+  }
+
+  @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'Lấy thông tin chi tiết lịch hẹn',
+    description: 'Lấy thông tin chi tiết của một lịch hẹn theo ID',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID của lịch hẹn',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Lấy thông tin lịch hẹn thành công',
+  })
+  @ApiResponseSwagger({
+    status: 404,
+    description: 'Không tìm thấy lịch hẹn',
+  })
+  async findById(@Param('id') id: string) {
+    const appointment = await this.appointmentService.findById(id);
+    return ApiResponse.success(appointment, 'Lấy thông tin lịch hẹn thành công');
+  }
+
+  @Patch(':id/cancel')
+  @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'Hủy lịch hẹn',
+    description: `
+      Hủy lịch hẹn với lý do và ghi chú.
+      
+      **Business Rules:**
+      - Chỉ có thể hủy lịch hẹn với trạng thái PENDING hoặc CONFIRMED
+      - Patient chỉ có thể hủy lịch hẹn của chính mình
+      - Doctor có thể hủy lịch hẹn mà họ được đặt
+      - Admin có thể hủy mọi lịch hẹn
+      
+      **Lý do hủy:**
+      - PATIENT_REQUEST: Bệnh nhân yêu cầu hủy
+      - DOCTOR_UNAVAILABLE: Bác sĩ không có mặt
+      - EMERGENCY: Trường hợp khẩn cấp
+      - SCHEDULE_CONFLICT: Xung đột lịch trình
+      - OTHER: Lý do khác
+    `,
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID của lịch hẹn cần hủy',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Hủy lịch hẹn thành công',
+    schema: {
+      example: {
+        success: true,
+        statusCode: 200,
+        message: 'Hủy lịch hẹn thành công',
+        data: {
+          id: '550e8400-e29b-41d4-a716-446655440000',
+          appointmentDate: '2024-12-16',
+          status: 'CANCELLED',
+          examinationType: 'IN_PERSON',
+          symptoms: 'Đau bụng, buồn nôn',
+          consultationFee: 200000,
+          cancelledAt: '2024-12-15T10:00:00.000Z',
+          cancellationReason: 'PATIENT_REQUEST',
+          cancellationNote: 'Tôi có việc bận đột xuất',
+          doctor: {
+            id: '550e8400-e29b-41d4-a716-446655440001',
+            name: 'BS. Nguyễn Văn A',
+          },
+          patient: {
+            id: '550e8400-e29b-41d4-a716-446655440002',
+            name: 'Nguyễn Văn B',
+          },
+          payment: {
+            id: '550e8400-e29b-41d4-a716-446655440003',
+            paymentCode: '20241218001',
+            status: 'FAILED',
+          },
+          createdAt: '2024-12-13T10:00:00.000Z',
+        },
+        timestamp: '2024-12-15T10:00:00.000Z',
+      },
+    },
+  })
+  @ApiResponseSwagger({
+    status: 400,
+    description: 'Không thể hủy lịch hẹn với trạng thái hiện tại',
+  })
+  @ApiResponseSwagger({
+    status: 403,
+    description: 'Không có quyền hủy lịch hẹn này',
+  })
+  @ApiResponseSwagger({
+    status: 404,
+    description: 'Không tìm thấy lịch hẹn',
+  })
+  async cancel(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+    @Body() cancelDto: CancelAppointmentDto,
+  ) {
+    const appointment = await this.appointmentService.cancel(id, userId, cancelDto);
+    return ApiResponse.success(appointment, 'Hủy lịch hẹn thành công');
   }
 }
