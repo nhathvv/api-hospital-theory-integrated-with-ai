@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, ForbiddenException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -69,6 +69,12 @@ export class AppointmentController {
             startTime: '08:00',
             endTime: '08:30',
           },
+          payment: {
+            id: '550e8400-e29b-41d4-a716-446655440003',
+            paymentCode: '20241218001',
+            method: 'BANK_TRANSFER',
+            status: 'PENDING',
+          },
           createdAt: '2024-12-13T10:00:00.000Z',
         },
         timestamp: '2024-12-13T10:00:00.000Z',
@@ -91,6 +97,9 @@ export class AppointmentController {
     @CurrentUser('patientId') patientId: string,
     @Body() createAppointmentDto: CreateAppointmentDto,
   ) {
+    if (!patientId) {
+      throw new ForbiddenException('Không tìm thấy thông tin bệnh nhân. Vui lòng cập nhật hồ sơ');
+    }
     const appointment = await this.appointmentService.create(
       patientId,
       createAppointmentDto,

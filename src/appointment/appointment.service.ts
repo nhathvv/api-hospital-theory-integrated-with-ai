@@ -49,7 +49,7 @@ export class AppointmentService {
       appointmentDate,
     );
 
-    const appointment = await TransactionUtil.executeInTransaction(
+    const result = await TransactionUtil.executeInTransaction(
       this.prisma,
       async (tx) => {
         const newAppointment = await tx.appointment.create({
@@ -68,7 +68,7 @@ export class AppointmentService {
         });
 
         const paymentCode = await this.generatePaymentCode(tx);
-        await tx.payment.create({
+        const payment = await tx.payment.create({
           data: {
             appointmentId: newAppointment.id,
             paymentCode,
@@ -77,15 +77,17 @@ export class AppointmentService {
           },
         });
 
-        return newAppointment;
+        return { appointment: newAppointment, payment };
       },
     );
 
+    const { appointment, payment } = result;
+
     this.logger.log(
-      `Appointment created: ${appointment.id} for patient ${patientId} with doctor ${doctorId}`,
+      `Appointment created: ${appointment.id} with Payment: ${payment.paymentCode} for patient ${patientId} with doctor ${doctorId}`,
     );
 
-    return this.formatAppointmentResponse(appointment);
+    return this.formatAppointmentResponse(appointment, payment);
   }
 
   /**
@@ -97,6 +99,9 @@ export class AppointmentService {
     timeSlotId: string,
     appointmentDate: string,
   ) {
+    // 0. Validate bệnh nhân tồn tại
+    await this.validatePatient(patientId);
+
     // 1. Validate ngày đặt lịch (BR-01, BR-02)
     this.validateAppointmentDate(appointmentDate);
 
@@ -117,6 +122,17 @@ export class AppointmentService {
       timeSlot,
       consultationFee: doctor.consultationFee,
     };
+  }
+
+  private async validatePatient(patientId: string): Promise<void> {
+    const patient = await this.prisma.patient.findUnique({
+      where: { id: patientId, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!patient) {
+      throw new NotFoundException('Không tìm thấy thông tin bệnh nhân');
+    }
   }
 
   /**
@@ -344,11 +360,8 @@ export class AppointmentService {
     };
   }
 
-  /**
-   * Format response theo schema trong SRS
-   */
-  private formatAppointmentResponse(appointment: any) {
-    return {
+  private formatAppointmentResponse(appointment: any, payment?: any) {
+    const response: any = {
       id: appointment.id,
       appointmentDate: appointment.appointmentDate.toISOString().split('T')[0],
       status: appointment.status,
@@ -368,6 +381,17 @@ export class AppointmentService {
       },
       createdAt: appointment.createdAt.toISOString(),
     };
+
+    if (payment) {
+      response.payment = {
+        id: payment.id,
+        paymentCode: payment.paymentCode,
+        method: payment.method,
+        status: payment.status,
+      };
+    }
+
+    return response;
   }
 
   /**

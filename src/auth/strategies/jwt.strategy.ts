@@ -20,21 +20,29 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       include: {
-        patient: { select: { id: true } },
-        doctor: { select: { id: true } },
+        patient: { select: { id: true, deletedAt: true } },
+        doctor: { select: { id: true, deletedAt: true } },
       },
     });
+
+    console.log('JWT Validate - User ID:', payload.sub);
+    console.log('JWT Validate - User patient:', user?.patient);
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User not found or inactive');
     }
 
+    const patientId = user.patient && !user.patient.deletedAt ? user.patient.id : null;
+    const doctorId = user.doctor && !user.doctor.deletedAt ? user.doctor.id : null;
+
+    console.log('JWT Validate - patientId:', patientId);
+
     return {
       sub: payload.sub,
       email: payload.email,
       role: payload.role,
-      patientId: user.patient?.id ?? null,
-      doctorId: user.doctor?.id ?? null,
+      patientId,
+      doctorId,
     };
   }
 }
