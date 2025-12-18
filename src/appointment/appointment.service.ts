@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma';
-import { CreateAppointmentDto } from './dto';
+import { CreateAppointmentDto, QueryAppointmentDto } from './dto';
 import { AppointmentStatus, DayOfWeek, DoctorStatus } from '@prisma/client';
 import { PaymentStatus } from 'src/payment/enum';
 import { TransactionUtil, CodeGeneratorUtils } from '../common/utils';
@@ -88,6 +88,68 @@ export class AppointmentService {
     );
 
     return this.formatAppointmentResponse(appointment, payment);
+  }
+
+  async findAll(query: QueryAppointmentDto) {
+    const { startDate, endDate, doctorId, status, patientSearch } = query;
+
+    const where: any = {};
+
+    if (patientSearch) {
+      where.patient = {
+        user: {
+          OR: [
+            { fullName: { contains: patientSearch, mode: 'insensitive' } },
+            { phone: { contains: patientSearch, mode: 'insensitive' } },
+            { email: { contains: patientSearch, mode: 'insensitive' } },
+          ],
+        },
+      };
+    }
+
+    if (startDate || endDate) {
+      where.appointmentDate = {};
+      if (startDate) {
+        where.appointmentDate.gte = new Date(startDate);
+      }
+      if (endDate) {
+        where.appointmentDate.lte = new Date(endDate);
+      }
+    }
+
+    if (doctorId) {
+      where.doctorId = doctorId;
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    const [appointments, totalItems] = await Promise.all([
+      this.prisma.appointment.findMany({
+        where,
+        include: {
+          ...this.getAppointmentIncludes(),
+          payment: {
+            select: {
+              id: true,
+              paymentCode: true,
+              method: true,
+              status: true,
+            },
+          },
+        },
+        orderBy: query.getPrismaSortParams(),
+        ...query.getPrismaParams(),
+      }),
+      this.prisma.appointment.count({ where }),
+    ]);
+
+    const data = appointments.map((appointment) =>
+      this.formatAppointmentResponse(appointment, appointment.payment),
+    );
+
+    return { data, totalItems };
   }
 
   /**
@@ -376,6 +438,12 @@ export class AppointmentService {
       symptoms: appointment.symptoms,
       notes: appointment.notes,
       consultationFee: appointment.consultationFee,
+      patient: {
+        id: appointment.patient.id,
+        name: appointment.patient.user.fullName,
+        email: appointment.patient.user.email,
+        phone: appointment.patient.user.phone,
+      },
       doctor: {
         id: appointment.doctor.id,
         name: appointment.doctor.user.fullName,

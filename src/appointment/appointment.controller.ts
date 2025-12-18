@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, UseGuards, ForbiddenException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -6,11 +6,11 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AppointmentService } from './appointment.service';
-import { CreateAppointmentDto } from './dto';
+import { CreateAppointmentDto, QueryAppointmentDto } from './dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles, CurrentUser } from '../auth/decorators';
 import { UserRole } from '../common/constants';
-import { ApiResponse } from '../common/dto';
+import { ApiResponse, PaginatedResponse } from '../common/dto';
 
 /**
  * Appointment Controller
@@ -23,6 +23,75 @@ import { ApiResponse } from '../common/dto';
 @Controller('appointments')
 export class AppointmentController {
   constructor(private readonly appointmentService: AppointmentService) {}
+
+  @Get()
+  @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'Lấy danh sách lịch hẹn',
+    description: `
+      Lấy danh sách lịch hẹn với các filter:
+      - **patientSearch**: Tìm kiếm theo tên, số điện thoại hoặc email của bệnh nhân
+      - **startDate**: Lọc từ ngày (YYYY-MM-DD)
+      - **endDate**: Lọc đến ngày (YYYY-MM-DD)
+      - **doctorId**: Lọc theo bác sĩ
+      - **status**: Lọc theo trạng thái (PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW)
+    `,
+  })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Lấy danh sách lịch hẹn thành công',
+    schema: {
+      example: {
+        success: true,
+        statusCode: 200,
+        message: 'Lấy danh sách lịch hẹn thành công',
+        data: [
+          {
+            id: '550e8400-e29b-41d4-a716-446655440000',
+            appointmentDate: '2024-12-16',
+            status: 'PENDING',
+            examinationType: 'IN_PERSON',
+            symptoms: 'Đau bụng, buồn nôn',
+            consultationFee: 200000,
+            doctor: {
+              id: '550e8400-e29b-41d4-a716-446655440001',
+              name: 'BS. Nguyễn Văn A',
+            },
+            patient: {
+              id: '550e8400-e29b-41d4-a716-446655440002',
+              name: 'Nguyễn Văn B',
+              email: 'patient@example.com',
+              phone: '0901234567',
+            },
+            timeSlot: {
+              id: '550e8400-e29b-41d4-a716-446655440003',
+              startTime: '08:00',
+              endTime: '08:30',
+            },
+            payment: {
+              id: '550e8400-e29b-41d4-a716-446655440004',
+              paymentCode: '20241218001',
+              status: 'PENDING',
+            },
+            createdAt: '2024-12-13T10:00:00.000Z',
+          },
+        ],
+        meta: {
+          page: 1,
+          limit: 10,
+          totalItems: 50,
+          totalPages: 5,
+          hasNextPage: true,
+          hasPreviousPage: false,
+        },
+        timestamp: '2024-12-13T10:00:00.000Z',
+      },
+    },
+  })
+  async findAll(@Query() query: QueryAppointmentDto) {
+    const { data, totalItems } = await this.appointmentService.findAll(query);
+    return PaginatedResponse.create(data, totalItems, query, 'Lấy danh sách lịch hẹn thành công');
+  }
 
   /**
    * FR-008: Create Appointment (Draft)
