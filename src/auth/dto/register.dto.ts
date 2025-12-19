@@ -39,7 +39,10 @@ export class RegisterDto {
   @MaxLength(100)
   username: string;
 
-  @ApiPropertyOptional({ example: '0901234567', description: 'Phone number must be 10-11 digits' })
+  @ApiPropertyOptional({
+    example: '0901234567',
+    description: 'Phone number must be 10-11 digits',
+  })
   @IsString()
   @IsOptional()
   @Matches(/^[0-9]{10,11}$/, {
@@ -54,4 +57,3 @@ export class RegisterDto {
   @MaxLength(100)
   fullName: string;
 }
-

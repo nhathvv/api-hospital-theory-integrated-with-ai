@@ -41,25 +41,28 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    const user = await TransactionUtils.executeInTransaction(this.prisma, async (tx) => {
-      const newUser = await tx.user.create({
-        data: {
-          email: registerDto.email,
-          password: hashedPassword,
-          username: registerDto.username,
-          phone: registerDto.phone,
-          fullName: registerDto.fullName,
-        },
-      });
+    const user = await TransactionUtils.executeInTransaction(
+      this.prisma,
+      async (tx) => {
+        const newUser = await tx.user.create({
+          data: {
+            email: registerDto.email,
+            password: hashedPassword,
+            username: registerDto.username,
+            phone: registerDto.phone,
+            fullName: registerDto.fullName,
+          },
+        });
 
-      await tx.patient.create({
-        data: {
-          userId: newUser.id,
-        },
-      });
+        await tx.patient.create({
+          data: {
+            userId: newUser.id,
+          },
+        });
 
-      return newUser;
-    });
+        return newUser;
+      },
+    );
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
     await this.saveRefreshToken(user.id, tokens.refreshToken);
@@ -213,4 +216,3 @@ export class AuthService {
     });
   }
 }
-

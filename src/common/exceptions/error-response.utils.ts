@@ -60,7 +60,10 @@ export function isPrismaError(exception: unknown): boolean {
 }
 
 export function handlePrismaError(exception: unknown): ExceptionDetails {
-  const prismaError = exception as { code: string; meta?: { target?: string[] } };
+  const prismaError = exception as {
+    code: string;
+    meta?: { target?: string[] };
+  };
 
   switch (prismaError.code) {
     case 'P2002':

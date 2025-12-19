@@ -20,9 +20,14 @@ export class DoctorScheduleService {
 
   async create(createDto: CreateDoctorScheduleDto) {
     await this.validateDoctor(createDto.doctorId);
-    const daysOfWeek = createDto.daysOfWeek ?? this.extractDaysOfWeek(createDto.timeSlots);
+    const daysOfWeek =
+      createDto.daysOfWeek ?? this.extractDaysOfWeek(createDto.timeSlots);
     this.validateTimeSlots(createDto.timeSlots, createDto.daysOfWeek);
-    this.validateDaysExistInDateRange(createDto.startDate, createDto.endDate, daysOfWeek);
+    this.validateDaysExistInDateRange(
+      createDto.startDate,
+      createDto.endDate,
+      daysOfWeek,
+    );
     await this.checkOverlappingSchedule(
       createDto.doctorId,
       createDto.startDate,
@@ -169,16 +174,26 @@ export class DoctorScheduleService {
 
   async update(id: string, updateDto: UpdateDoctorScheduleDto) {
     const existing = await this.findOne(id);
-    const startDate = updateDto.startDate ?? existing.startDate.toISOString().split('T')[0];
-    const endDate = updateDto.endDate ?? existing.endDate.toISOString().split('T')[0];
-    const daysOfWeek = updateDto.daysOfWeek
-      ?? (updateDto.timeSlots ? this.extractDaysOfWeek(updateDto.timeSlots) : this.extractDaysOfWeek(existing.timeSlots));
+    const startDate =
+      updateDto.startDate ?? existing.startDate.toISOString().split('T')[0];
+    const endDate =
+      updateDto.endDate ?? existing.endDate.toISOString().split('T')[0];
+    const daysOfWeek =
+      updateDto.daysOfWeek ??
+      (updateDto.timeSlots
+        ? this.extractDaysOfWeek(updateDto.timeSlots)
+        : this.extractDaysOfWeek(existing.timeSlots));
 
     if (updateDto.timeSlots) {
       this.validateTimeSlots(updateDto.timeSlots, updateDto.daysOfWeek);
     }
 
-    if (updateDto.startDate || updateDto.endDate || updateDto.timeSlots || updateDto.daysOfWeek) {
+    if (
+      updateDto.startDate ||
+      updateDto.endDate ||
+      updateDto.timeSlots ||
+      updateDto.daysOfWeek
+    ) {
       this.validateDaysExistInDateRange(startDate, endDate, daysOfWeek);
       await this.checkOverlappingSchedule(
         existing.doctorId,
@@ -207,10 +222,14 @@ export class DoctorScheduleService {
       return tx.doctorSchedule.update({
         where: { id },
         data: {
-          ...(updateDto.startDate && { startDate: new Date(updateDto.startDate) }),
+          ...(updateDto.startDate && {
+            startDate: new Date(updateDto.startDate),
+          }),
           ...(updateDto.endDate && { endDate: new Date(updateDto.endDate) }),
           ...(updateDto.timezone && { timezone: updateDto.timezone }),
-          ...(updateDto.isActive !== undefined && { isActive: updateDto.isActive }),
+          ...(updateDto.isActive !== undefined && {
+            isActive: updateDto.isActive,
+          }),
         },
         include: {
           doctor: {
@@ -238,7 +257,10 @@ export class DoctorScheduleService {
     }
   }
 
-  private validateTimeSlots(timeSlots: TimeSlotDto[], daysOfWeek?: DayOfWeek[]) {
+  private validateTimeSlots(
+    timeSlots: TimeSlotDto[],
+    daysOfWeek?: DayOfWeek[],
+  ) {
     for (const slot of timeSlots) {
       if (slot.startTime >= slot.endTime) {
         throw new BadRequestException(
@@ -256,7 +278,9 @@ export class DoctorScheduleService {
 
     if (daysOfWeek) {
       const slotDays = new Set(timeSlots.map((slot) => slot.dayOfWeek));
-      const invalidDays = [...slotDays].filter((day) => !daysOfWeek.includes(day));
+      const invalidDays = [...slotDays].filter(
+        (day) => !daysOfWeek.includes(day),
+      );
       if (invalidDays.length > 0) {
         throw new BadRequestException(
           `Time slots contain invalid days: ${invalidDays.join(', ')}. Allowed days: ${daysOfWeek.join(', ')}`,
@@ -272,7 +296,9 @@ export class DoctorScheduleService {
     }
 
     for (const [day, daySlots] of slotsByDay) {
-      const sorted = daySlots.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      const sorted = daySlots.sort((a, b) =>
+        a.startTime.localeCompare(b.startTime),
+      );
       for (let i = 0; i < sorted.length - 1; i++) {
         if (sorted[i].endTime > sorted[i + 1].startTime) {
           throw new BadRequestException(
@@ -283,7 +309,11 @@ export class DoctorScheduleService {
     }
   }
 
-  private validateDaysExistInDateRange(startDate: string, endDate: string, daysOfWeek: DayOfWeek[]) {
+  private validateDaysExistInDateRange(
+    startDate: string,
+    endDate: string,
+    daysOfWeek: DayOfWeek[],
+  ) {
     const daysInRange = new Set<DayOfWeek>();
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -326,7 +356,9 @@ export class DoctorScheduleService {
     });
 
     for (const schedule of existingSchedules) {
-      const existingDays = new Set(schedule.timeSlots.map((slot) => slot.dayOfWeek));
+      const existingDays = new Set(
+        schedule.timeSlots.map((slot) => slot.dayOfWeek),
+      );
       const overlappingDays = daysOfWeek.filter((day) => existingDays.has(day));
       if (overlappingDays.length > 0) {
         throw new ConflictException(
@@ -349,7 +381,9 @@ export class DoctorScheduleService {
     return days[date.getDay()];
   }
 
-  private extractDaysOfWeek(timeSlots: { dayOfWeek: DayOfWeek }[]): DayOfWeek[] {
+  private extractDaysOfWeek(
+    timeSlots: { dayOfWeek: DayOfWeek }[],
+  ): DayOfWeek[] {
     return [...new Set(timeSlots.map((slot) => slot.dayOfWeek))];
   }
 }

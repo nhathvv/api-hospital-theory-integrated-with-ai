@@ -15,12 +15,18 @@ import { TimeSlotDto } from './time-slot.dto';
 import { IsAfter } from '../../common/validators/date-after.validator';
 
 export class UpdateDoctorScheduleDto {
-  @ApiPropertyOptional({ description: 'Start date (YYYY-MM-DD)', example: '2025-02-03' })
+  @ApiPropertyOptional({
+    description: 'Start date (YYYY-MM-DD)',
+    example: '2025-02-03',
+  })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: 'End date (YYYY-MM-DD)', example: '2025-04-30' })
+  @ApiPropertyOptional({
+    description: 'End date (YYYY-MM-DD)',
+    example: '2025-04-30',
+  })
   @IsOptional()
   @IsDateString()
   @IsAfter('startDate', { message: 'endDate must be after startDate' })
@@ -29,7 +35,8 @@ export class UpdateDoctorScheduleDto {
   @ApiPropertyOptional({
     enum: DayOfWeek,
     isArray: true,
-    description: 'Days of week (optional, will be extracted from timeSlots if not provided)',
+    description:
+      'Days of week (optional, will be extracted from timeSlots if not provided)',
     example: ['MONDAY', 'TUESDAY'],
   })
   @IsOptional()
@@ -48,7 +55,10 @@ export class UpdateDoctorScheduleDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiPropertyOptional({ type: [TimeSlotDto], description: 'Time slots (each slot must have dayOfWeek)' })
+  @ApiPropertyOptional({
+    type: [TimeSlotDto],
+    description: 'Time slots (each slot must have dayOfWeek)',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(1)

@@ -20,7 +20,10 @@ export class CreateDoctorScheduleDto {
   @IsUUID()
   doctorId: string;
 
-  @ApiProperty({ description: 'Start date (YYYY-MM-DD)', example: '2025-02-03' })
+  @ApiProperty({
+    description: 'Start date (YYYY-MM-DD)',
+    example: '2025-02-03',
+  })
   @IsDateString()
   startDate: string;
 
@@ -32,7 +35,8 @@ export class CreateDoctorScheduleDto {
   @ApiPropertyOptional({
     enum: DayOfWeek,
     isArray: true,
-    description: 'Days of week (optional, will be extracted from timeSlots if not provided)',
+    description:
+      'Days of week (optional, will be extracted from timeSlots if not provided)',
     example: ['MONDAY', 'TUESDAY'],
   })
   @IsOptional()
@@ -51,7 +55,10 @@ export class CreateDoctorScheduleDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiProperty({ type: [TimeSlotDto], description: 'Time slots (each slot must have dayOfWeek)' })
+  @ApiProperty({
+    type: [TimeSlotDto],
+    description: 'Time slots (each slot must have dayOfWeek)',
+  })
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

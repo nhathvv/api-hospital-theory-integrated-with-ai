@@ -44,7 +44,9 @@ describe('DoctorService - create', () => {
   };
 
   beforeEach(async () => {
-    jest.spyOn(EnvService, 'getInstance').mockReturnValue(mockEnvService as any);
+    jest
+      .spyOn(EnvService, 'getInstance')
+      .mockReturnValue(mockEnvService as any);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -220,17 +222,21 @@ describe('DoctorService - create', () => {
         expect(result.awards).toHaveLength(1);
         expect(result.status).toBe(DoctorStatus.ACTIVE);
 
-        expect(userService.findByEmail).toHaveBeenCalledWith(validCreateDoctorDto.email);
+        expect(userService.findByEmail).toHaveBeenCalledWith(
+          validCreateDoctorDto.email,
+        );
         expect(prismaService.specialty.findUnique).toHaveBeenCalledWith({
           where: { id: validCreateDoctorDto.primarySpecialtyId },
         });
-        expect(prismaService.doctorCertification.findMany).toHaveBeenCalledWith({
-          where: {
-            licenseNumber: {
-              in: ['HN-12345'],
+        expect(prismaService.doctorCertification.findMany).toHaveBeenCalledWith(
+          {
+            where: {
+              licenseNumber: {
+                in: ['HN-12345'],
+              },
             },
           },
-        });
+        );
         expect(userService.createUserInTransaction).toHaveBeenCalledWith(
           expect.anything(),
           expect.objectContaining({
@@ -470,13 +476,15 @@ describe('DoctorService - create', () => {
         expect(result).toBeDefined();
         expect(result.educations).toHaveLength(2);
         expect(result.certifications).toHaveLength(2);
-        expect(prismaService.doctorCertification.findMany).toHaveBeenCalledWith({
-          where: {
-            licenseNumber: {
-              in: ['HN-99999', 'US-12345'],
+        expect(prismaService.doctorCertification.findMany).toHaveBeenCalledWith(
+          {
+            where: {
+              licenseNumber: {
+                in: ['HN-99999', 'US-12345'],
+              },
             },
           },
-        });
+        );
       });
     });
 
@@ -493,7 +501,9 @@ describe('DoctorService - create', () => {
           'Email already exists',
         );
 
-        expect(userService.findByEmail).toHaveBeenCalledWith(validCreateDoctorDto.email);
+        expect(userService.findByEmail).toHaveBeenCalledWith(
+          validCreateDoctorDto.email,
+        );
         expect(prismaService.doctor.create).not.toHaveBeenCalled();
       });
 
@@ -558,13 +568,15 @@ describe('DoctorService - create', () => {
           'License number(s) already exist: HN-12345',
         );
 
-        expect(prismaService.doctorCertification.findMany).toHaveBeenCalledWith({
-          where: {
-            licenseNumber: {
-              in: ['HN-12345'],
+        expect(prismaService.doctorCertification.findMany).toHaveBeenCalledWith(
+          {
+            where: {
+              licenseNumber: {
+                in: ['HN-12345'],
+              },
             },
           },
-        });
+        );
         expect(prismaService.doctor.create).not.toHaveBeenCalled();
       });
 
@@ -725,4 +737,3 @@ describe('DoctorService - create', () => {
     });
   });
 });
-

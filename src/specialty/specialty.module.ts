@@ -10,4 +10,3 @@ import { PrismaModule } from '../prisma';
   exports: [SpecialtyService],
 })
 export class SpecialtyModule {}
-

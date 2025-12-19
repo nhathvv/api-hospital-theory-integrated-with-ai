@@ -26,7 +26,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const { status, message, errorCode, errors } = this.getExceptionDetails(exception);
+    const { status, message, errorCode, errors } =
+      this.getExceptionDetails(exception);
 
     const errorResponse: ErrorResponse = buildErrorResponse(
       status,

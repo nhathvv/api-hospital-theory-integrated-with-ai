@@ -1,4 +1,14 @@
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, IsUUID, Matches, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MedicineUnit } from '@prisma/client';
 
@@ -18,7 +28,8 @@ export class CreateMedicineDto {
   @IsString()
   @MaxLength(50)
   @Matches(/^[A-Z][A-Z0-9_]*$/, {
-    message: 'Mã thuốc phải là chữ in hoa, số và dấu gạch dưới, bắt đầu bằng chữ cái',
+    message:
+      'Mã thuốc phải là chữ in hoa, số và dấu gạch dưới, bắt đầu bằng chữ cái',
   })
   code: string;
 

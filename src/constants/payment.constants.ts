@@ -1,1 +1,1 @@
-export const PREFIX_PAYMENT_CODE = 'NHAT'
+export const PREFIX_PAYMENT_CODE = 'NHAT';

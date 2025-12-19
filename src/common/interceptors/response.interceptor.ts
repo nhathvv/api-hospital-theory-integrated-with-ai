@@ -23,7 +23,10 @@ export class ResponseInterceptor<T>
     const request = context.switchToHttp().getRequest();
     const path = request.url;
 
-    if (path && (path.startsWith('/api/docs') || path.startsWith('/api/docs-json'))) {
+    if (
+      path &&
+      (path.startsWith('/api/docs') || path.startsWith('/api/docs-json'))
+    ) {
       return next.handle() as Observable<ApiResponse<T>>;
     }
 
@@ -62,4 +65,3 @@ export class ResponseInterceptor<T>
     return messages[statusCode] || 'Success';
   }
 }
-

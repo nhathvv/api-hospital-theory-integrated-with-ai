@@ -1,4 +1,10 @@
-import { IsBoolean, IsOptional, IsString, MaxLength, Matches } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Matches,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateMedicineCategoryDto {
@@ -17,7 +23,8 @@ export class CreateMedicineCategoryDto {
   @IsString()
   @MaxLength(50)
   @Matches(/^[A-Z][A-Z0-9_]*$/, {
-    message: 'Code must be uppercase letters, numbers, and underscores only, starting with a letter',
+    message:
+      'Code must be uppercase letters, numbers, and underscores only, starting with a letter',
   })
   code: string;
 

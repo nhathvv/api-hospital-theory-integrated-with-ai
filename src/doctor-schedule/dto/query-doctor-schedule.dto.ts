@@ -27,7 +27,10 @@ export class QueryDoctorScheduleDto extends PaginationQueryDto {
 }
 
 export class QueryAvailableSlotsDto {
-  @ApiPropertyOptional({ description: 'Date to get available slots (YYYY-MM-DD)', example: '2025-02-03' })
+  @ApiPropertyOptional({
+    description: 'Date to get available slots (YYYY-MM-DD)',
+    example: '2025-02-03',
+  })
   @IsOptional()
   @IsDateString()
   date?: string;

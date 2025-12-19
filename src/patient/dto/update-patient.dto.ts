@@ -52,7 +52,7 @@ export class UpdatePatientDto {
 
   @ApiPropertyOptional({
     example: 'O+',
-    description: 'Nhóm máu (A+, A-, B+, B-, AB+, AB-, O+, O-)'
+    description: 'Nhóm máu (A+, A-, B+, B-, AB+, AB-, O+, O-)',
   })
   @IsOptional()
   @IsString()
@@ -70,14 +70,18 @@ export class UpdatePatientDto {
   @IsDateString()
   dateOfBirth?: string;
 
-  @ApiPropertyOptional({ enum: Gender, example: Gender.MALE, description: 'Giới tính' })
+  @ApiPropertyOptional({
+    enum: Gender,
+    example: Gender.MALE,
+    description: 'Giới tính',
+  })
   @IsOptional()
   @IsEnum(Gender)
   gender?: Gender;
 
   @ApiPropertyOptional({
     example: 'DN1234567890',
-    description: 'Mã số bảo hiểm y tế (BHYT)'
+    description: 'Mã số bảo hiểm y tế (BHYT)',
   })
   @IsOptional()
   @IsString()
@@ -86,16 +90,18 @@ export class UpdatePatientDto {
 
   @ApiPropertyOptional({
     example: '0987654321',
-    description: 'Số điện thoại liên hệ khẩn cấp'
+    description: 'Số điện thoại liên hệ khẩn cấp',
   })
   @IsOptional()
   @IsString()
-  @Matches(/^[0-9]{10,11}$/, { message: 'Số liên hệ khẩn cấp phải có 10–11 chữ số' })
+  @Matches(/^[0-9]{10,11}$/, {
+    message: 'Số liên hệ khẩn cấp phải có 10–11 chữ số',
+  })
   emergencyContact?: string;
 
   @ApiPropertyOptional({
     example: '012345678901',
-    description: 'Số CMND/CCCD'
+    description: 'Số CMND/CCCD',
   })
   @IsOptional()
   @IsString()
@@ -104,7 +110,7 @@ export class UpdatePatientDto {
 
   @ApiPropertyOptional({
     example: 'Cao huyết áp, tiểu đường',
-    description: 'Bệnh mãn tính'
+    description: 'Bệnh mãn tính',
   })
   @IsOptional()
   @IsString()

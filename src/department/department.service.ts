@@ -4,7 +4,11 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma';
-import { CreateDepartmentDto, UpdateDepartmentDto, QueryDepartmentDto } from './dto';
+import {
+  CreateDepartmentDto,
+  UpdateDepartmentDto,
+  QueryDepartmentDto,
+} from './dto';
 
 @Injectable()
 export class DepartmentService {
@@ -149,4 +153,3 @@ export class DepartmentService {
     }
   }
 }
-

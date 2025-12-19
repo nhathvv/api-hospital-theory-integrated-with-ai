@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma';
-import { CreateMedicineBatchDto, QueryMedicineBatchDto, UpdateMedicineBatchDto } from './dto';
+import {
+  CreateMedicineBatchDto,
+  QueryMedicineBatchDto,
+  UpdateMedicineBatchDto,
+} from './dto';
 
 @Injectable()
 export class MedicineBatchService {
@@ -47,8 +51,14 @@ export class MedicineBatchService {
   private buildWhereClause(
     query: QueryMedicineBatchDto,
   ): Prisma.MedicineBatchWhereInput {
-    const { search, medicineId, categoryId, status, expiryDateBefore, expiryDateAfter } =
-      query;
+    const {
+      search,
+      medicineId,
+      categoryId,
+      status,
+      expiryDateBefore,
+      expiryDateAfter,
+    } = query;
     const where: Prisma.MedicineBatchWhereInput = {
       deletedAt: null, // Exclude soft-deleted records
     };
@@ -107,7 +117,9 @@ export class MedicineBatchService {
     return this.prisma.medicineBatch.create({
       data: {
         ...batchData,
-        manufactureDate: dto.manufactureDate ? new Date(dto.manufactureDate) : null,
+        manufactureDate: dto.manufactureDate
+          ? new Date(dto.manufactureDate)
+          : null,
         expiryDate: new Date(dto.expiryDate),
         currentStock: dto.quantity, // Set current stock to initial quantity
       },
@@ -159,14 +171,20 @@ export class MedicineBatchService {
 
     // Validate unique batch number if being updated
     if (dto.batchNumber && dto.batchNumber !== existingBatch.batchNumber) {
-      await this.validateUniqueBatchNumber(existingBatch.medicineId, dto.batchNumber, id);
+      await this.validateUniqueBatchNumber(
+        existingBatch.medicineId,
+        dto.batchNumber,
+        id,
+      );
     }
 
     // Build update data with proper date handling
     const data: Prisma.MedicineBatchUpdateInput = {
       ...dto,
       ...(dto.manufactureDate !== undefined && {
-        manufactureDate: dto.manufactureDate ? new Date(dto.manufactureDate) : null,
+        manufactureDate: dto.manufactureDate
+          ? new Date(dto.manufactureDate)
+          : null,
       }),
       ...(dto.expiryDate && { expiryDate: new Date(dto.expiryDate) }),
     };
@@ -204,7 +222,10 @@ export class MedicineBatchService {
    * @param medicineId - Medicine ID to validate
    * @param categoryId - Optional category ID to validate
    */
-  private async validateMedicineAndCategory(medicineId: string, categoryId?: string) {
+  private async validateMedicineAndCategory(
+    medicineId: string,
+    categoryId?: string,
+  ) {
     const medicine = await this.prisma.medicine.findUnique({
       where: { id: medicineId },
     });

@@ -1,5 +1,11 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MedicineUnit } from '@prisma/client';
 
@@ -8,7 +14,9 @@ import { MedicineUnit } from '@prisma/client';
  * Used for filtering medicines
  */
 export class QueryMedicineDto {
-  @ApiPropertyOptional({ description: 'Search by name, code, or active ingredient' })
+  @ApiPropertyOptional({
+    description: 'Search by name, code, or active ingredient',
+  })
   @IsOptional()
   @IsString()
   search?: string;

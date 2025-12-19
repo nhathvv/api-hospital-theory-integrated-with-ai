@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma';
 import { CreateDoctorDto, QueryDoctorDto } from './dto';
 import { UserService } from '../user';
@@ -22,85 +27,91 @@ export class DoctorService {
     await this.validateData(createDoctorDto);
     const defaultPassword = this.envService.getDefaultPassword();
     const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-    this.logger.log(`Created doctor account with default password: ${createDoctorDto.email}`);
-    const doctor = await TransactionUtils.executeInTransaction(this.prisma, async (tx) => {
-      const user = await this.userService.createUserInTransaction(tx, {
-        email: createDoctorDto.email,
-        password: hashedPassword,
-        username: createDoctorDto.username,
-        phone: createDoctorDto.phone,
-        fullName: createDoctorDto.fullName,
-        avatar: createDoctorDto.avatar,
-        address: createDoctorDto.address,
-        role: UserRole.DOCTOR,
-      });
-      const educations = createDoctorDto.educations.map((edu) => ({
-        school: edu.school,
-        degree: edu.degree,
-        graduationYear: edu.graduationYear,
-      }));
-      const certifications = createDoctorDto.certifications.map((cert) => ({
-        certificateName: cert.certificateName,
-        issuingAuthority: cert.issuingAuthority,
-        licenseNumber: cert.licenseNumber,
-        issueDate: new Date(cert.issueDate),
-        expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : null,
-        documentUrl: cert.documentUrl,
-      }));
-      const awards = createDoctorDto.awards?.map((award) => ({
-        title: award.title,
-        organization: award.organization,
-        year: award.year,
-        description: award.description,
-      })) || [];
-      return tx.doctor.create({
-        data: {
-          userId: user.id,
-          primarySpecialtyId: createDoctorDto.primarySpecialtyId,
-          subSpecialty: createDoctorDto.subSpecialty,
-          professionalTitle: createDoctorDto.professionalTitle,
-          yearsOfExperience: createDoctorDto.yearsOfExperience,
-          consultationFee: createDoctorDto.consultationFee,
-          bio: createDoctorDto.bio,
-          status: createDoctorDto.status || DoctorStatus.ACTIVE,
-          educations: {
-            create: educations,
-          },
-          certifications: {
-            create: certifications,
-          },
-          ...(awards.length > 0 && {
-            awards: {
-              create: awards,
+    this.logger.log(
+      `Created doctor account with default password: ${createDoctorDto.email}`,
+    );
+    const doctor = await TransactionUtils.executeInTransaction(
+      this.prisma,
+      async (tx) => {
+        const user = await this.userService.createUserInTransaction(tx, {
+          email: createDoctorDto.email,
+          password: hashedPassword,
+          username: createDoctorDto.username,
+          phone: createDoctorDto.phone,
+          fullName: createDoctorDto.fullName,
+          avatar: createDoctorDto.avatar,
+          address: createDoctorDto.address,
+          role: UserRole.DOCTOR,
+        });
+        const educations = createDoctorDto.educations.map((edu) => ({
+          school: edu.school,
+          degree: edu.degree,
+          graduationYear: edu.graduationYear,
+        }));
+        const certifications = createDoctorDto.certifications.map((cert) => ({
+          certificateName: cert.certificateName,
+          issuingAuthority: cert.issuingAuthority,
+          licenseNumber: cert.licenseNumber,
+          issueDate: new Date(cert.issueDate),
+          expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : null,
+          documentUrl: cert.documentUrl,
+        }));
+        const awards =
+          createDoctorDto.awards?.map((award) => ({
+            title: award.title,
+            organization: award.organization,
+            year: award.year,
+            description: award.description,
+          })) || [];
+        return tx.doctor.create({
+          data: {
+            userId: user.id,
+            primarySpecialtyId: createDoctorDto.primarySpecialtyId,
+            subSpecialty: createDoctorDto.subSpecialty,
+            professionalTitle: createDoctorDto.professionalTitle,
+            yearsOfExperience: createDoctorDto.yearsOfExperience,
+            consultationFee: createDoctorDto.consultationFee,
+            bio: createDoctorDto.bio,
+            status: createDoctorDto.status || DoctorStatus.ACTIVE,
+            educations: {
+              create: educations,
             },
-          }),
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              username: true,
-              phone: true,
-              fullName: true,
-              avatar: true,
-              address: true,
-              role: true,
+            certifications: {
+              create: certifications,
             },
+            ...(awards.length > 0 && {
+              awards: {
+                create: awards,
+              },
+            }),
           },
-          primarySpecialty: true,
-          educations: true,
-          certifications: true,
-          awards: true,
-        },
-      });
-    });
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                username: true,
+                phone: true,
+                fullName: true,
+                avatar: true,
+                address: true,
+                role: true,
+              },
+            },
+            primarySpecialty: true,
+            educations: true,
+            certifications: true,
+            awards: true,
+          },
+        });
+      },
+    );
     return {
       ...doctor,
       defaultPassword,
     };
   }
-  
+
   async findAll(query: QueryDoctorDto) {
     const where = this.buildFilterQuery(query);
     const [doctors, total] = await Promise.all([
@@ -115,7 +126,7 @@ export class DoctorService {
     return {
       data: doctors,
       total,
-    }
+    };
   }
 
   async findOne(id: string) {
@@ -154,7 +165,11 @@ export class DoctorService {
     return date.toISOString().split('T')[0];
   }
 
-  private getAvailableDates(startDate: Date, endDate: Date, dayOfWeek: DayOfWeek): string[] {
+  private getAvailableDates(
+    startDate: Date,
+    endDate: Date,
+    dayOfWeek: DayOfWeek,
+  ): string[] {
     const dayOfWeekMap: Record<DayOfWeek, number> = {
       [DayOfWeek.SUNDAY]: 0,
       [DayOfWeek.MONDAY]: 1,
@@ -173,8 +188,8 @@ export class DoctorService {
     const end = new Date(endDate);
     const targetDay = dayOfWeekMap[dayOfWeek];
 
-    let current = new Date(Math.max(start.getTime(), today.getTime()));
-    
+    const current = new Date(Math.max(start.getTime(), today.getTime()));
+
     const daysUntilTarget = (targetDay - current.getDay() + 7) % 7;
     current.setDate(current.getDate() + daysUntilTarget);
 
@@ -344,17 +359,21 @@ export class DoctorService {
       throw new ConflictException('Primary specialty is not active');
     }
     const licenseNumbers = dto.certifications.map((cert) => cert.licenseNumber);
-    const existingCertifications = await this.prisma.doctorCertification.findMany({
-      where: {
-        licenseNumber: {
-          in: licenseNumbers,
+    const existingCertifications =
+      await this.prisma.doctorCertification.findMany({
+        where: {
+          licenseNumber: {
+            in: licenseNumbers,
+          },
         },
-      },
-    });
+      });
     if (existingCertifications.length > 0) {
-      const duplicateLicenses = existingCertifications.map((cert) => cert.licenseNumber).join(', ');
-      throw new ConflictException(`License number(s) already exist: ${duplicateLicenses}`);
+      const duplicateLicenses = existingCertifications
+        .map((cert) => cert.licenseNumber)
+        .join(', ');
+      throw new ConflictException(
+        `License number(s) already exist: ${duplicateLicenses}`,
+      );
     }
   }
 }
-

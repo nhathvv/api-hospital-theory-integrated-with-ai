@@ -1,4 +1,10 @@
-import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateSpecialtyDto {
@@ -24,4 +30,3 @@ export class UpdateSpecialtyDto {
   @IsBoolean()
   isActive?: boolean;
 }
-

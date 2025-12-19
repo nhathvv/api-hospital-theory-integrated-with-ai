@@ -18,4 +18,3 @@ import { AuthModule } from '../auth';
   exports: [UserService],
 })
 export class UserModule {}
-

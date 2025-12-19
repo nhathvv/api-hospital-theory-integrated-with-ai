@@ -18,7 +18,11 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { MedicineBatchService } from '../../medicine-batch/medicine-batch.service';
-import { CreateMedicineBatchDto, QueryMedicineBatchDto, UpdateMedicineBatchDto } from '../../medicine-batch/dto';
+import {
+  CreateMedicineBatchDto,
+  QueryMedicineBatchDto,
+  UpdateMedicineBatchDto,
+} from '../../medicine-batch/dto';
 import { ApiResponse, PaginatedResponse } from '../../common/dto';
 import { UserRole } from '../../common/constants';
 import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
@@ -41,7 +45,12 @@ export class AdminMedicineBatchController {
   })
   async findAll(@Query() query: QueryMedicineBatchDto) {
     const result = await this.medicineBatchService.findAll(query);
-    return PaginatedResponse.create(result.data, result.total, query, 'Medicine batches retrieved successfully');
+    return PaginatedResponse.create(
+      result.data,
+      result.total,
+      query,
+      'Medicine batches retrieved successfully',
+    );
   }
 
   @Post()
@@ -73,7 +82,10 @@ export class AdminMedicineBatchController {
   })
   async findOne(@Param('id') id: string) {
     const medicineBatch = await this.medicineBatchService.findOne(id);
-    return ApiResponse.success(medicineBatch, 'Lấy thông tin lô thuốc thành công');
+    return ApiResponse.success(
+      medicineBatch,
+      'Lấy thông tin lô thuốc thành công',
+    );
   }
 
   @Patch(':id')

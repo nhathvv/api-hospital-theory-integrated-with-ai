@@ -16,9 +16,11 @@ export class TransactionUtils {
         return await callback(tx);
       });
     } catch (error) {
-      this.logger.error('Transaction failed', error instanceof Error ? error.stack : error);
+      this.logger.error(
+        'Transaction failed',
+        error instanceof Error ? error.stack : error,
+      );
       throw error;
     }
   }
 }
-

@@ -19,7 +19,10 @@ export class UserController {
 
   @Get('me')
   @ApiOperation({ summary: 'Get current authenticated user profile' })
-  @ApiResponseSwagger({ status: 200, description: 'User profile retrieved successfully' })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'User profile retrieved successfully',
+  })
   @ApiResponseSwagger({ status: 401, description: 'Unauthorized' })
   @ApiResponseSwagger({ status: 404, description: 'User not found' })
   async getMe(

@@ -49,7 +49,8 @@ export class PatientService {
       throw new NotFoundException('Patient profile not found');
     }
 
-    const { fullName, phone, address, avatar, ...patientData } = updatePatientDto;
+    const { fullName, phone, address, avatar, ...patientData } =
+      updatePatientDto;
 
     return TransactionUtils.executeInTransaction(this.prisma, async (tx) => {
       if (fullName || phone || address || avatar) {
@@ -68,7 +69,9 @@ export class PatientService {
         where: { userId },
         data: {
           ...patientData,
-          ...(patientData.dateOfBirth && { dateOfBirth: new Date(patientData.dateOfBirth) }),
+          ...(patientData.dateOfBirth && {
+            dateOfBirth: new Date(patientData.dateOfBirth),
+          }),
         },
         include: this.getPatientIncludes(),
       });

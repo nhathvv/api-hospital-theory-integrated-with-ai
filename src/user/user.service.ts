@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma';
 import { UserRole } from '@prisma/client';
 import { TransactionClient } from '../common/utils';
@@ -26,7 +31,7 @@ export class UserService {
       avatar?: string;
       address?: string;
       role: UserRole;
-    }
+    },
   ) {
     return tx.user.create({
       data,
@@ -68,7 +73,7 @@ export class UserService {
     ]);
     return { user, profile };
   }
-  
+
   private getProfileByRole(userId: string, role: UserRole) {
     const profileFetchers: Record<UserRole, () => Promise<unknown>> = {
       [UserRole.PATIENT]: () => this.patientService.getProfileByUserId(userId),
@@ -78,4 +83,3 @@ export class UserService {
     return profileFetchers[role]();
   }
 }
-

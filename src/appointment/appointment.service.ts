@@ -7,8 +7,17 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma';
-import { CreateAppointmentDto, QueryAppointmentDto, CancelAppointmentDto } from './dto';
-import { AppointmentStatus, DayOfWeek, DoctorStatus, CancellationReason } from '@prisma/client';
+import {
+  CreateAppointmentDto,
+  QueryAppointmentDto,
+  CancelAppointmentDto,
+} from './dto';
+import {
+  AppointmentStatus,
+  DayOfWeek,
+  DoctorStatus,
+  CancellationReason,
+} from '@prisma/client';
 import { PaymentStatus } from 'src/payment/enum';
 import { TransactionUtils, CodeGeneratorUtils } from '../common/utils';
 
@@ -41,7 +50,15 @@ export class AppointmentService {
    * @returns Lịch hẹn mới với trạng thái PENDING
    */
   async create(patientId: string, createDto: CreateAppointmentDto) {
-    const { doctorId, timeSlotId, appointmentDate, examinationType, symptoms, notes, paymentMethod } = createDto;
+    const {
+      doctorId,
+      timeSlotId,
+      appointmentDate,
+      examinationType,
+      symptoms,
+      notes,
+      paymentMethod,
+    } = createDto;
 
     const { consultationFee } = await this.validateAndGetData(
       patientId,
@@ -211,11 +228,17 @@ export class AppointmentService {
       throw new NotFoundException('Không tìm thấy lịch hẹn');
     }
 
-    if (appointment.patient.userId !== userId && appointment.doctor.userId !== userId) {
+    if (
+      appointment.patient.userId !== userId &&
+      appointment.doctor.userId !== userId
+    ) {
       throw new ForbiddenException('Bạn không có quyền hủy lịch hẹn này');
     }
 
-    const cancellableStatuses: AppointmentStatus[] = [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED];
+    const cancellableStatuses: AppointmentStatus[] = [
+      AppointmentStatus.PENDING,
+      AppointmentStatus.CONFIRMED,
+    ];
     if (!cancellableStatuses.includes(appointment.status)) {
       throw new BadRequestException(
         `Không thể hủy lịch hẹn với trạng thái ${this.getStatusVietnamese(appointment.status)}`,
@@ -247,7 +270,10 @@ export class AppointmentService {
           },
         });
 
-        if (appointment.payment && appointment.payment.status === PaymentStatus.PENDING) {
+        if (
+          appointment.payment &&
+          appointment.payment.status === PaymentStatus.PENDING
+        ) {
           await tx.payment.update({
             where: { id: appointment.payment.id },
             data: { status: PaymentStatus.FAILED },
@@ -306,13 +332,21 @@ export class AppointmentService {
     const doctor = await this.validateDoctor(doctorId);
 
     // 3. Validate và lấy thông tin time slot (BR-08)
-    const timeSlot = await this.validateTimeSlot(timeSlotId, doctorId, appointmentDate);
+    const timeSlot = await this.validateTimeSlot(
+      timeSlotId,
+      doctorId,
+      appointmentDate,
+    );
 
     // 4. Kiểm tra slot còn chỗ trống (BR-06)
     await this.validateSlotAvailability(timeSlotId, appointmentDate);
 
     // 5. Kiểm tra trùng lịch của bệnh nhân (BR-03)
-    await this.validateNoDuplicateAppointment(patientId, doctorId, appointmentDate);
+    await this.validateNoDuplicateAppointment(
+      patientId,
+      doctorId,
+      appointmentDate,
+    );
 
     return {
       doctor,
@@ -339,8 +373,12 @@ export class AppointmentService {
   private validateAppointmentDate(appointmentDate: string): void {
     const now = new Date();
     const targetDate = new Date(appointmentDate);
-    const minDate = new Date(now.getTime() + this.BOOKING_WINDOW_HOURS * 60 * 60 * 1000);
-    const maxDate = new Date(now.getTime() + this.MAX_ADVANCE_DAYS * 24 * 60 * 60 * 1000);
+    const minDate = new Date(
+      now.getTime() + this.BOOKING_WINDOW_HOURS * 60 * 60 * 1000,
+    );
+    const maxDate = new Date(
+      now.getTime() + this.MAX_ADVANCE_DAYS * 24 * 60 * 60 * 1000,
+    );
 
     // Reset time to start of day for date comparison
     targetDate.setHours(0, 0, 0, 0);
@@ -388,7 +426,9 @@ export class AppointmentService {
     }
 
     if (doctor.status !== DoctorStatus.ACTIVE) {
-      throw new BadRequestException('Bác sĩ hiện tại không hoạt động. Vui lòng chọn bác sĩ khác');
+      throw new BadRequestException(
+        'Bác sĩ hiện tại không hoạt động. Vui lòng chọn bác sĩ khác',
+      );
     }
 
     return doctor;
@@ -427,7 +467,9 @@ export class AppointmentService {
     }
     // BR-08: Kiểm tra schedule đang active
     if (!timeSlot.schedule.isActive) {
-      throw new BadRequestException('Lịch làm việc không còn hoạt động. Vui lòng chọn khung giờ khác');
+      throw new BadRequestException(
+        'Lịch làm việc không còn hoạt động. Vui lòng chọn khung giờ khác',
+      );
     }
     // Kiểm tra ngày đặt lịch nằm trong khoảng startDate - endDate của schedule
     const targetDate = new Date(appointmentDate);
@@ -448,7 +490,7 @@ export class AppointmentService {
     if (timeSlot.dayOfWeek !== dayOfWeek) {
       throw new BadRequestException(
         `Khung giờ này không có vào ngày ${this.getDayOfWeekVietnamese(dayOfWeek)}. ` +
-        `Khung giờ này chỉ có vào ngày ${this.getDayOfWeekVietnamese(timeSlot.dayOfWeek)}`,
+          `Khung giờ này chỉ có vào ngày ${this.getDayOfWeekVietnamese(timeSlot.dayOfWeek)}`,
       );
     }
     return timeSlot;
@@ -476,13 +518,19 @@ export class AppointmentService {
         timeSlotId,
         appointmentDate: new Date(appointmentDate),
         status: {
-          in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS],
+          in: [
+            AppointmentStatus.PENDING,
+            AppointmentStatus.CONFIRMED,
+            AppointmentStatus.IN_PROGRESS,
+          ],
         },
       },
     });
 
     if (bookedCount >= timeSlot.maxPatients) {
-      throw new ConflictException('Khung giờ này đã hết chỗ. Vui lòng chọn khung giờ khác');
+      throw new ConflictException(
+        'Khung giờ này đã hết chỗ. Vui lòng chọn khung giờ khác',
+      );
     }
   }
 
@@ -500,7 +548,11 @@ export class AppointmentService {
         doctorId,
         appointmentDate: new Date(appointmentDate),
         status: {
-          in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS],
+          in: [
+            AppointmentStatus.PENDING,
+            AppointmentStatus.CONFIRMED,
+            AppointmentStatus.IN_PROGRESS,
+          ],
         },
       },
     });
@@ -647,7 +699,11 @@ export class AppointmentService {
     return dayMap[dayOfWeek];
   }
 
-  private async generatePaymentCode(tx: Parameters<Parameters<typeof TransactionUtils.executeInTransaction>[1]>[0]): Promise<string> {
+  private async generatePaymentCode(
+    tx: Parameters<
+      Parameters<typeof TransactionUtils.executeInTransaction>[1]
+    >[0],
+  ): Promise<string> {
     const todayPrefix = CodeGeneratorUtils.getTodayPrefix();
     const lastPayment = await tx.payment.findFirst({
       where: { paymentCode: { startsWith: todayPrefix } },

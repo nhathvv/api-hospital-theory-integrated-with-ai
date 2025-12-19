@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Patch, Body, Query, Param, UseGuards, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Body,
+  Query,
+  Param,
+  UseGuards,
+  ForbiddenException,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -7,7 +17,11 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { AppointmentService } from './appointment.service';
-import { CreateAppointmentDto, QueryAppointmentDto, CancelAppointmentDto } from './dto';
+import {
+  CreateAppointmentDto,
+  QueryAppointmentDto,
+  CancelAppointmentDto,
+} from './dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles, CurrentUser } from '../auth/decorators';
 import { UserRole } from '../common/constants';
@@ -91,7 +105,12 @@ export class AppointmentController {
   })
   async findAll(@Query() query: QueryAppointmentDto) {
     const { data, totalItems } = await this.appointmentService.findAll(query);
-    return PaginatedResponse.create(data, totalItems, query, 'Lấy danh sách lịch hẹn thành công');
+    return PaginatedResponse.create(
+      data,
+      totalItems,
+      query,
+      'Lấy danh sách lịch hẹn thành công',
+    );
   }
 
   /**
@@ -179,7 +198,9 @@ export class AppointmentController {
     @Body() createAppointmentDto: CreateAppointmentDto,
   ) {
     if (!patientId) {
-      throw new ForbiddenException('Không tìm thấy thông tin bệnh nhân. Vui lòng cập nhật hồ sơ');
+      throw new ForbiddenException(
+        'Không tìm thấy thông tin bệnh nhân. Vui lòng cập nhật hồ sơ',
+      );
     }
     const appointment = await this.appointmentService.create(
       patientId,
@@ -209,7 +230,10 @@ export class AppointmentController {
   })
   async findById(@Param('id') id: string) {
     const appointment = await this.appointmentService.findById(id);
-    return ApiResponse.success(appointment, 'Lấy thông tin lịch hẹn thành công');
+    return ApiResponse.success(
+      appointment,
+      'Lấy thông tin lịch hẹn thành công',
+    );
   }
 
   @Patch(':id/cancel')
@@ -292,7 +316,11 @@ export class AppointmentController {
     @CurrentUser('id') userId: string,
     @Body() cancelDto: CancelAppointmentDto,
   ) {
-    const appointment = await this.appointmentService.cancel(id, userId, cancelDto);
+    const appointment = await this.appointmentService.cancel(
+      id,
+      userId,
+      cancelDto,
+    );
     return ApiResponse.success(appointment, 'Hủy lịch hẹn thành công');
   }
 }

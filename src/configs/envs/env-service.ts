@@ -1,7 +1,10 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import EnvironmentVariables from 'src/configs/envs/env-variables';
-import { parseExpirationToSeconds, parseExpirationToMs } from 'src/common/utils';
+import {
+  parseExpirationToSeconds,
+  parseExpirationToMs,
+} from 'src/common/utils';
 
 export class EnvService {
   private static _instance: EnvService;

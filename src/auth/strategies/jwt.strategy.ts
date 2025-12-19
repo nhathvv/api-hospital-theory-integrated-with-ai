@@ -32,8 +32,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('User not found or inactive');
     }
 
-    const patientId = user.patient && !user.patient.deletedAt ? user.patient.id : null;
-    const doctorId = user.doctor && !user.doctor.deletedAt ? user.doctor.id : null;
+    const patientId =
+      user.patient && !user.patient.deletedAt ? user.patient.id : null;
+    const doctorId =
+      user.doctor && !user.doctor.deletedAt ? user.doctor.id : null;
 
     console.log('JWT Validate - patientId:', patientId);
 
@@ -46,4 +48,3 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     };
   }
 }
-

@@ -29,4 +29,3 @@ export class QueryDoctorDto extends PaginationQueryDto {
   @IsEnum(DoctorStatus)
   status?: DoctorStatus;
 }
-

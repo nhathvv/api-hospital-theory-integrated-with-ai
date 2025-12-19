@@ -2,7 +2,8 @@ import * as crypto from 'crypto';
 
 export class PasswordUtil {
   static generateTemporaryPassword(length: number = 16): string {
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    const charset =
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
     const randomBytes = crypto.randomBytes(length);
     let password = '';
     for (let i = 0; i < length; i++) {
@@ -11,4 +12,3 @@ export class PasswordUtil {
     return password;
   }
 }
-
