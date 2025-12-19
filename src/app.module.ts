@@ -17,11 +17,20 @@ import { AdminModule } from './admin';
 import { AppointmentModule } from './appointment';
 import { PaymentModule } from './payment/payment.module';
 import { EnvService } from './configs/envs/env-service';
+import { BullModule } from '@nestjs/bullmq';
 
 const envService = EnvService.getInstance();
 
 @Module({
   imports: [
+    BullModule.forRoot({
+      connection: {
+        host: envService.getRedisHost(),
+        port: envService.getRedisPort(),
+        username: envService.getRedisUsername(),
+        password: envService.getRedisPassword(),
+      },
+    }),
     ThrottlerModule.forRoot([
       {
         ttl: envService.getThrottleTtl(),

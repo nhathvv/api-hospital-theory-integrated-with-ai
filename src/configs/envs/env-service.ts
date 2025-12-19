@@ -72,4 +72,16 @@ export class EnvService {
   getThrottleLimit(): number {
     return Number(process.env.THROTTLE_LIMIT) || 10;
   }
+  getRedisHost(): string {
+    return process.env.REDIS_HOST || 'localhost';
+  }
+  getRedisPort(): number {
+    return Number(process.env.REDIS_PORT) || 6379;
+  }
+  getRedisUsername(): string {
+    return process.env.REDIS_USERNAME || '';
+  }
+  getRedisPassword(): string {
+    return process.env.REDIS_PASSWORD || '';
+  }
 }
