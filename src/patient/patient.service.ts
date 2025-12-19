@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma';
 import { UpdatePatientDto, QueryPatientDto } from './dto';
 import { Prisma } from '@prisma/client';
-import { TransactionUtil } from '../common/utils';
+import { TransactionUtils } from '../common/utils';
 
 @Injectable()
 export class PatientService {
@@ -34,6 +34,8 @@ export class PatientService {
         gender: true,
         healthInsuranceNumber: true,
         emergencyContact: true,
+        identityNumber: true,
+        chronicDisease: true,
       },
     });
   }
@@ -49,7 +51,7 @@ export class PatientService {
 
     const { fullName, phone, address, avatar, ...patientData } = updatePatientDto;
 
-    return TransactionUtil.executeInTransaction(this.prisma, async (tx) => {
+    return TransactionUtils.executeInTransaction(this.prisma, async (tx) => {
       if (fullName || phone || address || avatar) {
         await tx.user.update({
           where: { id: userId },

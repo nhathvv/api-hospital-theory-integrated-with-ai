@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url     = env("DATABASE_URL")
 }
 
 model User {
@@ -191,6 +191,8 @@ model Patient {
   gender                Gender?
   healthInsuranceNumber String?
   emergencyContact      String?
+  identityNumber        String?   // Số CMND/CCCD
+  chronicDisease        String?   // Bệnh mãn tính
   deletedAt             DateTime?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
@@ -202,44 +204,28 @@ model Patient {
   @@map("patients")
 }
 
-/// Lịch hẹn khám bệnh
 model Appointment {
   id                 String                @id @default(uuid())
-  /// Mã bệnh nhân
-  patientId          String
-  /// Mã bác sĩ
-  doctorId           String
-  /// Mã khung giờ
-  timeSlotId         String
-  /// Ngày hẹn khám
+  patientId          String                // Mã bệnh nhân
+  doctorId           String                // Mã bác sĩ
+  timeSlotId         String                // Mã khung giờ
   appointmentDate    DateTime              @db.Date
-  /// Trạng thái lịch hẹn
   status             AppointmentStatus     @default(PENDING)
-  /// Loại hình khám (trực tiếp/online)
-  examinationType    ExaminationType
-  /// Triệu chứng ban đầu
-  symptoms           String?
-  /// Ghi chú của bệnh nhân
-  notes              String?
-  /// Chẩn đoán của bác sĩ
-  diagnosis          String?
-  /// Đơn thuốc
-  prescription       String?
-  /// Thời điểm hủy
+  examinationType    ExaminationType       // Loại hình khám (trực tiếp/online)
+  symptoms           String?               // Triệu chứng ban đầu
+  notes              String?               // Ghi chú của bệnh nhân
+  diagnosis          String?               // Chẩn đoán của bác sĩ
+  prescription       String?               // Đơn thuốc
   cancelledAt        DateTime?
-  /// Người hủy lịch hẹn
   cancelledById      String?
-  /// Lý do hủy
-  cancellationReason CancellationReason?
-  /// Ghi chú khi hủy
-  cancellationNote   String?
-  /// Phí khám bệnh
-  consultationFee    Int?
-  /// Thời điểm hoàn thành
-  completedAt        DateTime?
+  cancellationReason CancellationReason?   // Lý do hủy
+  cancellationNote   String?               // Ghi chú khi hủy
+  consultationFee    Int?                  // Phí khám bệnh
+  completedAt        DateTime?             // Thời điểm hoàn thành
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
-  documents          AppointmentDocument[]
+  documents          AppointmentDocument[] // Tài liệu y tế của lịch hẹn
+  payment            Payment?
   doctor             Doctor                @relation(fields: [doctorId], references: [id])
   patient            Patient               @relation(fields: [patientId], references: [id])
   timeSlot           DoctorTimeSlot        @relation(fields: [timeSlotId], references: [id])
@@ -255,18 +241,12 @@ model Appointment {
 /// Tài liệu y tế của lịch hẹn (kết quả xét nghiệm, X-quang, MRI, ...)
 model AppointmentDocument {
   id            String      @id @default(uuid())
-  /// Mã lịch hẹn
-  appointmentId String
-  /// Tiêu đề tài liệu
-  title         String
-  /// Loại tài liệu (LAB_RESULT, X_RAY, MRI, PRESCRIPTION, ...)
-  documentType  String
-  /// Đường dẫn file
-  documentUrl   String
-  /// Người tải lên (userId)
-  uploadedById  String
-  /// Ghi chú
-  notes         String?
+  appointmentId String                // Mã lịch hẹn
+  title         String                // Tiêu đề tài liệu
+  documentType  String                // Loại tài liệu (LAB_RESULT, X_RAY, MRI, PRESCRIPTION, ...)
+  documentUrl   String                // Đường dẫn file
+  uploadedById  String                // Người tải lên (userId)
+  notes         String?               // Ghi chú
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
@@ -275,15 +255,11 @@ model AppointmentDocument {
   @@map("appointment_documents")
 }
 
-/// Nhóm thuốc
 model MedicineCategory {
   id          String   @id @default(uuid())
-  /// Tên nhóm thuốc (Kháng sinh, Giảm đau, ...)
-  name        String   @unique
-  /// Mã nhóm thuốc (ANTIBIOTICS, ANALGESICS, ...)
-  code        String   @unique
-  /// Mô tả nhóm thuốc
-  description String?
+  name        String   @unique   // Tên nhóm thuốc (Kháng sinh, Giảm đau, ...)
+  code        String   @unique   // Mã nhóm thuốc (ANTIBIOTICS, ANALGESICS, ...)
+  description String?   // Mô tả nhóm thuốc
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -296,27 +272,17 @@ model MedicineCategory {
 /// Thuốc
 model Medicine {
   id                   String            @id @default(uuid())
-  /// Tên thuốc (Paracetamol 500mg)
-  name                 String
-  /// Mã thuốc
-  code                 String            @unique
-  /// Hoạt chất
-  activeIngredient     String?
-  /// Mô tả / Công dụng (Giảm đau, hạ sốt)
-  description          String?
-  /// Đơn vị tính (Tablets, Capsules, ...)
-  unit                 MedicineUnit
-  /// Hàm lượng (500mg, 100ml, ...)
-  dosage               String?
-  /// Nhà sản xuất
-  manufacturer         String?
-  /// Mã nhóm thuốc (FK)
-  categoryId           String?
+  name                 String            // Tên thuốc (Paracetamol 500mg)
+  code                 String            @unique   // Mã thuốc
+  activeIngredient     String?           // Hoạt chất
+  description          String?           // Mô tả / Công dụng (Giảm đau, hạ sốt)
+  unit                 MedicineUnit      // Đơn vị tính (Tablets, Capsules, ...)
+  dosage               String?           // Hàm lượng (500mg, 100ml, ...)
+  manufacturer         String?           // Nhà sản xuất
+  categoryId           String?           // Mã nhóm thuốc (FK)
   category             MedicineCategory? @relation(fields: [categoryId], references: [id])
-  /// Ngưỡng cảnh báo sắp hết hàng
-  lowStockThreshold    Int               @default(100)
-  /// Thuốc kê đơn
-  requiresPrescription Boolean           @default(false)
+  lowStockThreshold    Int               @default(100)   // Ngưỡng cảnh báo sắp hết hàng
+  requiresPrescription Boolean           @default(false) // Thuốc kê đơn
   isActive             Boolean           @default(true)
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
@@ -327,36 +293,22 @@ model Medicine {
   @@index([categoryId])
   @@map("medicines")
 }
-
-/// Lô thuốc nhập kho
+  
 model MedicineBatch {
   id              String      @id @default(uuid())
-  /// Mã thuốc
-  medicineId      String
-  /// Số lô (PARA-0825-01)
-  batchNumber     String
-  /// Số lượng nhập ban đầu
-  quantity        Int
-  /// Số lượng tồn kho hiện tại
-  currentStock    Int
-  /// Giá nhập (VND)
-  unitPrice       Int
-  /// Giá bán (VND)
-  sellingPrice    Int
-  /// Ngày sản xuất
-  manufactureDate DateTime?
-  /// Hạn sử dụng
-  expiryDate      DateTime
-
-  /// Nhà sản xuất
-  manufacturer    String?
-  /// Nhà cung cấp
-  supplier        String?
-
-  /// Trạng thái lô thuốc
-  status          BatchStatus @default(IN_STOCK)
-  /// Ghi chú
-  notes           String?
+  medicineId      String      // Mã thuốc
+  batchNumber     String      // Số lô (PARA-0825-01)
+  quantity        Int         // Số lượng nhập ban đầu
+  currentStock    Int         // Số lượng tồn kho hiện tại
+  unitPrice       Int         // Giá nhập (VND)
+  sellingPrice    Int         // Giá bán (VND)
+  manufactureDate DateTime?   // Ngày sản xuất
+  expiryDate      DateTime    // Hạn sử dụng
+  manufacturer    String?     // Nhà sản xuất
+  supplier        String?     // Nhà cung cấp
+  status          BatchStatus @default(IN_STOCK) // Trạng thái lô thuốc
+  notes           String?     // Ghi chú
+  deletedAt       DateTime?   // Thời điểm xóa mềm
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -366,9 +318,48 @@ model MedicineBatch {
   @@index([medicineId])
   @@index([expiryDate])
   @@index([status])
+  @@index([deletedAt])
   @@map("medicine_batches")
 }
 
+model Payment {
+  id            String        @id @default(uuid())
+  paymentCode   String        @unique
+  appointmentId String        @unique
+  appointment   Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([appointmentId])
+  @@index([paymentCode])
+  @@map("payments")
+}
+model PaymentTransaction {
+  id                 Int      @id @default(autoincrement()) // // ID giao dịch trên SePay
+  gateway            String   @db.VarChar(100) // Tên cổng thanh toán
+  transactionDate    DateTime @default(now()) //  Thời gian xảy ra giao dịch phía ngân hàng
+  accountNumber      String   @db.VarChar(100) // Số tài khoản ngân hàng
+  subAccount         String?  @db.VarChar(250) // Mã tài khoản phụ (nếu có)
+  amountIn           Int      @default(0) // Số tiền nhận vào (VND)
+  amountOut          Int      @default(0) // Số tiền chuyển ra (VND)
+  accumulated        Int      @default(0) // Số dư tích lũy (VND)
+  code               String?  @db.VarChar(250) //  Mã code thanh toán (sepay tự nhận diện dựa vào cấu hình tại Công ty -> Cấu hình chung)
+  transactionContent String?  @db.Text // Nội dung giao dịch
+  referenceNumber    String?  @db.VarChar(255) // Số tham chiếu từ ngân hàng
+  body               String?  @db.Text // Dữ liệu gốc từ webhook
+  createdAt DateTime @default(now())
+}
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+}
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
 enum UserRole {
   ADMIN
   DOCTOR
@@ -403,64 +394,39 @@ enum Gender {
 
 /// Trạng thái lịch hẹn
 enum AppointmentStatus {
-  /// Chờ xác nhận
-  PENDING
-  /// Đã xác nhận
-  CONFIRMED
-  /// Đang khám
-  IN_PROGRESS
-  /// Hoàn thành
-  COMPLETED
-  /// Đã hủy
-  CANCELLED
-  /// Không đến khám
-  NO_SHOW
+  PENDING   // Chờ xác nhận
+  CONFIRMED // Đã xác nhận
+  IN_PROGRESS // Đang khám
+  COMPLETED   // Hoàn thành
+  CANCELLED   // Đã hủy
+  NO_SHOW     // Không đến khám
 }
 
 /// Lý do hủy lịch hẹn
 enum CancellationReason {
-  /// Bệnh nhân yêu cầu hủy
-  PATIENT_REQUEST
-  /// Bác sĩ không có mặt
-  DOCTOR_UNAVAILABLE
-  /// Trường hợp khẩn cấp
-  EMERGENCY
-  /// Xung đột lịch trình
-  SCHEDULE_CONFLICT
-  /// Lý do khác
-  OTHER
+  PATIENT_REQUEST // Bệnh nhân yêu cầu hủy
+  DOCTOR_UNAVAILABLE // Bác sĩ không có mặt
+  EMERGENCY // Trường hợp khẩn cấp
+  SCHEDULE_CONFLICT // Xung đột lịch trình
+  OTHER // Lý do khác
 }
 
-/// Đơn vị tính thuốc
 enum MedicineUnit {
-  /// Viên nén
-  TABLET
-  /// Viên nang
-  CAPSULE
-  /// Gói
-  SACHET
-  /// Chai
-  BOTTLE
-  /// Tuýp
-  TUBE
-  /// Ống tiêm
-  AMPOULE
-  /// Lọ
-  VIAL
-  /// Hộp
-  BOX
+  TABLET // Viên nén
+  CAPSULE // Viên nang
+  SACHET // Gói
+  BOTTLE // Chai
+  TUBE // Tuýp
+  AMPOULE // Ống tiêm
+  VIAL // Lọ
+  BOX // Hộp
 }
 
 /// Trạng thái lô thuốc
 enum BatchStatus {
-  /// Còn hàng
-  IN_STOCK
-  /// Sắp hết hàng
-  LOW_STOCK
-  /// Hết hàng
-  OUT_OF_STOCK
-  /// Hết hạn
-  EXPIRED
-  /// Đã tiêu hủy
-  DISPOSED
+  IN_STOCK // Còn hàng
+  LOW_STOCK // Sắp hết hàng
+  OUT_OF_STOCK // Hết hàng
+  EXPIRED // Hết hạn
+  DISPOSED // Đã tiêu hủy
 }

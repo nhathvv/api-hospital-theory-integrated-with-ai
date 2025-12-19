@@ -8,7 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma';
 import { EnvService } from '../configs/envs/env-service';
 import { RegisterDto, LoginDto, RefreshTokenDto } from './dto';
-import { TransactionUtil } from '../common/utils';
+import { TransactionUtils } from '../common/utils';
 
 export interface TokenPayload {
   sub: string;
@@ -41,7 +41,7 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    const user = await TransactionUtil.executeInTransaction(this.prisma, async (tx) => {
+    const user = await TransactionUtils.executeInTransaction(this.prisma, async (tx) => {
       const newUser = await tx.user.create({
         data: {
           email: registerDto.email,

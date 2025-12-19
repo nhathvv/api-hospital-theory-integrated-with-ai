@@ -26,7 +26,12 @@ export class UpdateDoctorScheduleDto {
   @IsAfter('startDate', { message: 'endDate must be after startDate' })
   endDate?: string;
 
-  @ApiPropertyOptional({ enum: DayOfWeek, isArray: true, description: 'Days of week', example: ['MONDAY', 'TUESDAY'] })
+  @ApiPropertyOptional({
+    enum: DayOfWeek,
+    isArray: true,
+    description: 'Days of week (optional, will be extracted from timeSlots if not provided)',
+    example: ['MONDAY', 'TUESDAY'],
+  })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
@@ -43,7 +48,7 @@ export class UpdateDoctorScheduleDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiPropertyOptional({ type: [TimeSlotDto], description: 'Time slots' })
+  @ApiPropertyOptional({ type: [TimeSlotDto], description: 'Time slots (each slot must have dayOfWeek)' })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(1)

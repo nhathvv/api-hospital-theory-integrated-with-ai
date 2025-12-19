@@ -63,4 +63,25 @@ export class EnvService {
   getDefaultPassword(): string {
     return process.env.DEFAULT_PASSWORD || '';
   }
+  getPaymentApiKey(): string {
+    return process.env.PAYMENT_API_KEY || '';
+  }
+  getThrottleTtl(): number {
+    return Number(process.env.THROTTLE_TTL) || 60000;
+  }
+  getThrottleLimit(): number {
+    return Number(process.env.THROTTLE_LIMIT) || 10;
+  }
+  getRedisHost(): string {
+    return process.env.REDIS_HOST || 'localhost';
+  }
+  getRedisPort(): number {
+    return Number(process.env.REDIS_PORT) || 6379;
+  }
+  getRedisUsername(): string {
+    return process.env.REDIS_USERNAME || '';
+  }
+  getRedisPassword(): string {
+    return process.env.REDIS_PASSWORD || '';
+  }
 }

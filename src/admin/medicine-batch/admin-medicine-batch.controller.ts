@@ -2,8 +2,11 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
+  Delete,
   Body,
   Query,
+  Param,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -15,7 +18,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { MedicineBatchService } from '../../medicine-batch/medicine-batch.service';
-import { CreateMedicineBatchDto, QueryMedicineBatchDto } from '../../medicine-batch/dto';
+import { CreateMedicineBatchDto, QueryMedicineBatchDto, UpdateMedicineBatchDto } from '../../medicine-batch/dto';
 import { ApiResponse, PaginatedResponse } from '../../common/dto';
 import { UserRole } from '../../common/constants';
 import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
@@ -59,5 +62,53 @@ export class AdminMedicineBatchController {
   async create(@Body() dto: CreateMedicineBatchDto) {
     const medicineBatch = await this.medicineBatchService.create(dto);
     return ApiResponse.success(medicineBatch, 'Tạo lô thuốc thành công', 201);
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Lấy thông tin lô thuốc' })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Lấy thông tin lô thuốc thành công',
+  })
+  async findOne(@Param('id') id: string) {
+    const medicineBatch = await this.medicineBatchService.findOne(id);
+    return ApiResponse.success(medicineBatch, 'Lấy thông tin lô thuốc thành công');
+  }
+
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cập nhật lô thuốc' })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Cập nhật lô thuốc thành công',
+  })
+  @ApiResponseSwagger({
+    status: 404,
+    description: 'Không tìm thấy lô thuốc',
+  })
+  @ApiResponseSwagger({
+    status: 409,
+    description: 'Số lô đã tồn tại cho thuốc này',
+  })
+  async update(@Param('id') id: string, @Body() dto: UpdateMedicineBatchDto) {
+    const medicineBatch = await this.medicineBatchService.update(id, dto);
+    return ApiResponse.success(medicineBatch, 'Cập nhật lô thuốc thành công');
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Xóa mềm lô thuốc' })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Xóa lô thuốc thành công',
+  })
+  @ApiResponseSwagger({
+    status: 404,
+    description: 'Không tìm thấy lô thuốc',
+  })
+  async softDelete(@Param('id') id: string) {
+    await this.medicineBatchService.softDelete(id);
+    return ApiResponse.success(null, 'Xóa lô thuốc thành công');
   }
 }

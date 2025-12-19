@@ -2,10 +2,10 @@ import { Injectable, ConflictException, NotFoundException, Logger } from '@nestj
 import { PrismaService } from '../prisma';
 import { CreateDoctorDto, QueryDoctorDto } from './dto';
 import { UserService } from '../user';
-import { TransactionUtil } from '../common/utils';
+import { TransactionUtils } from '../common/utils';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/common/constants';
-import { DoctorStatus, Prisma } from '@prisma/client';
+import { DoctorStatus, Prisma, DayOfWeek } from '@prisma/client';
 import { EnvService } from '../configs/envs/env-service';
 
 @Injectable()
@@ -23,7 +23,7 @@ export class DoctorService {
     const defaultPassword = this.envService.getDefaultPassword();
     const hashedPassword = await bcrypt.hash(defaultPassword, 10);
     this.logger.log(`Created doctor account with default password: ${createDoctorDto.email}`);
-    const doctor = await TransactionUtil.executeInTransaction(this.prisma, async (tx) => {
+    const doctor = await TransactionUtils.executeInTransaction(this.prisma, async (tx) => {
       const user = await this.userService.createUserInTransaction(tx, {
         email: createDoctorDto.email,
         password: hashedPassword,
@@ -126,7 +126,64 @@ export class DoctorService {
     if (!doctor) {
       throw new NotFoundException('Doctor not found');
     }
-    return doctor;
+    return this.formatDoctorDetailResponse(doctor);
+  }
+
+  private formatDoctorDetailResponse(doctor: any) {
+    const formattedSchedules = doctor.schedules?.map((schedule: any) => ({
+      ...schedule,
+      startDate: this.formatDate(schedule.startDate),
+      endDate: this.formatDate(schedule.endDate),
+      timeSlots: schedule.timeSlots?.map((slot: any) => ({
+        ...slot,
+        availableDates: this.getAvailableDates(
+          schedule.startDate,
+          schedule.endDate,
+          slot.dayOfWeek,
+        ),
+      })),
+    }));
+
+    return {
+      ...doctor,
+      schedules: formattedSchedules,
+    };
+  }
+
+  private formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
+  private getAvailableDates(startDate: Date, endDate: Date, dayOfWeek: DayOfWeek): string[] {
+    const dayOfWeekMap: Record<DayOfWeek, number> = {
+      [DayOfWeek.SUNDAY]: 0,
+      [DayOfWeek.MONDAY]: 1,
+      [DayOfWeek.TUESDAY]: 2,
+      [DayOfWeek.WEDNESDAY]: 3,
+      [DayOfWeek.THURSDAY]: 4,
+      [DayOfWeek.FRIDAY]: 5,
+      [DayOfWeek.SATURDAY]: 6,
+    };
+
+    const dates: string[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const targetDay = dayOfWeekMap[dayOfWeek];
+
+    let current = new Date(Math.max(start.getTime(), today.getTime()));
+    
+    const daysUntilTarget = (targetDay - current.getDay() + 7) % 7;
+    current.setDate(current.getDate() + daysUntilTarget);
+
+    while (current <= end && dates.length < 8) {
+      dates.push(this.formatDate(current));
+      current.setDate(current.getDate() + 7);
+    }
+
+    return dates;
   }
 
   async getProfileByUserId(userId: string) {

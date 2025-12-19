@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 class EnvironmentVariables {
   @IsNumber()
@@ -28,5 +28,17 @@ class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   DEFAULT_PASSWORD: string;
+
+  @IsString()
+  @IsNotEmpty()
+  PAYMENT_API_KEY: string;
+
+  @IsNumber()
+  @IsOptional()
+  THROTTLE_TTL: number;
+
+  @IsNumber()
+  @IsOptional()
+  THROTTLE_LIMIT: number;
 }
 export default EnvironmentVariables;
