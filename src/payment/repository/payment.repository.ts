@@ -48,6 +48,13 @@ export class PaymentRepository {
     return { data: payments, total };
   }
 
+  async findOne(id: string) {
+    return this.prisma.payment.findUnique({
+      where: { id },
+      include: this.getPaymentDetailIncludes(),
+    });
+  }
+
   async findPaymentByCode(paymentCode: string) {
     return this.prisma.payment.findUnique({
       where: { paymentCode },
@@ -135,6 +142,47 @@ export class PaymentRepository {
           doctor: {
             select: {
               id: true,
+              user: {
+                select: {
+                  fullName: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+  }
+
+  private getPaymentDetailIncludes() {
+    return {
+      appointment: {
+        select: {
+          id: true,
+          appointmentDate: true,
+          consultationFee: true,
+          status: true,
+          examinationType: true,
+          symptoms: true,
+          notes: true,
+          createdAt: true,
+          patient: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  fullName: true,
+                  phone: true,
+                  email: true,
+                  avatar: true,
+                },
+              },
+            },
+          },
+          doctor: {
+            select: {
+              id: true,
+              professionalTitle: true,
               user: {
                 select: {
                   fullName: true,

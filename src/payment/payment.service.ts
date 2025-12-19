@@ -14,6 +14,14 @@ export class PaymentService {
     return this.paymentRepository.findAll(query);
   }
 
+  async findOne(id: string) {
+    const payment = await this.paymentRepository.findOne(id);
+    if (!payment) {
+      ExceptionUtils.throwNotFound('Payment not found');
+    }
+    return payment;
+  }
+
   async receiver(data: WebhookPaymentBodyDto) {
     this.logger.log(
       `Received payment webhook: transactionId=${data.id}, code=${data.code}`,

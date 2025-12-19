@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -10,7 +10,7 @@ import { QueryPaymentDto } from '../../payment/dto';
 import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
 import { Roles } from '../../auth/decorators';
 import { UserRole } from '../../common/constants';
-import { PaginatedResponse } from '../../common/dto';
+import { ApiResponse, PaginatedResponse } from '../../common/dto';
 
 @ApiTags('Admin - Payment Management')
 @ApiBearerAuth('JWT-auth')
@@ -34,5 +34,17 @@ export class AdminPaymentController {
       query,
       'Payments retrieved successfully',
     );
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get payment detail by ID' })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Payment retrieved successfully',
+  })
+  @ApiResponseSwagger({ status: 404, description: 'Payment not found' })
+  async findOne(@Param('id') id: string) {
+    const payment = await this.paymentService.findOne(id);
+    return ApiResponse.success(payment, 'Payment retrieved successfully');
   }
 }
