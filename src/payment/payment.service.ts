@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { WebhookPaymentBodyDto, QueryPaymentDto } from './dto';
+import {
+  WebhookPaymentBodyDto,
+  QueryPaymentDto,
+  QueryMyPaymentDto,
+} from './dto';
 import { PaymentRepository } from './repository/payment.repository';
 import { PaymentStatus, TransferType } from './enum';
 import { ExceptionUtils, CodeGeneratorUtils } from '../common/utils';
@@ -16,6 +20,22 @@ export class PaymentService {
 
   async findOne(id: string) {
     const payment = await this.paymentRepository.findOne(id);
+    if (!payment) {
+      ExceptionUtils.throwNotFound('Payment not found');
+    }
+    return payment;
+  }
+
+
+  async findMyPayments(patientId: string, query: QueryMyPaymentDto) {
+    return this.paymentRepository.findByPatientId(patientId, query);
+  }
+
+  async findMyPaymentById(id: string, patientId: string) {
+    const payment = await this.paymentRepository.findOneByPatient(
+      id,
+      patientId,
+    );
     if (!payment) {
       ExceptionUtils.throwNotFound('Payment not found');
     }

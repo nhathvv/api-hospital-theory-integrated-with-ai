@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { WebhookPaymentBodyDto, QueryPaymentDto } from '../dto';
+import {
+  WebhookPaymentBodyDto,
+  QueryPaymentDto,
+  QueryMyPaymentDto,
+} from '../dto';
 import { PaymentStatus, TransferType } from '../enum';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -67,6 +71,111 @@ export class PaymentRepository {
       where: { paymentCode },
       data: { status },
     });
+  }
+
+
+  async findByPatientId(patientId: string, query: QueryMyPaymentDto) {
+    const where = this.buildPatientFilterQuery(patientId, query);
+
+    const [payments, total] = await Promise.all([
+      this.prisma.payment.findMany({
+        where,
+        ...query.getPrismaParams(),
+        orderBy: { createdAt: 'desc' },
+        include: this.getPatientPaymentIncludes(),
+      }),
+      this.prisma.payment.count({ where }),
+    ]);
+
+    return { data: payments, total };
+  }
+
+  async findOneByPatient(id: string, patientId: string) {
+    return this.prisma.payment.findFirst({
+      where: {
+        id,
+        appointment: { patientId },
+      },
+      include: this.getPatientPaymentDetailIncludes(),
+    });
+  }
+
+  private buildPatientFilterQuery(
+    patientId: string,
+    query: QueryMyPaymentDto,
+  ): Prisma.PaymentWhereInput {
+    const appointmentFilters: Prisma.AppointmentWhereInput = { patientId };
+
+    if (query.startDate || query.endDate) {
+      appointmentFilters.appointmentDate = {};
+      if (query.startDate) {
+        appointmentFilters.appointmentDate.gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        appointmentFilters.appointmentDate.lte = new Date(query.endDate);
+      }
+    }
+
+    return {
+      ...(query.status && { status: query.status }),
+      appointment: appointmentFilters,
+    };
+  }
+
+  private getPatientPaymentIncludes() {
+    return {
+      appointment: {
+        select: {
+          id: true,
+          appointmentDate: true,
+          consultationFee: true,
+          status: true,
+          examinationType: true,
+          doctor: {
+            select: {
+              id: true,
+              professionalTitle: true,
+              user: { select: { fullName: true, avatar: true } },
+              primarySpecialty: { select: { name: true } },
+            },
+          },
+        },
+      },
+    };
+  }
+
+  private getPatientPaymentDetailIncludes() {
+    return {
+      appointment: {
+        select: {
+          id: true,
+          appointmentDate: true,
+          consultationFee: true,
+          status: true,
+          examinationType: true,
+          symptoms: true,
+          notes: true,
+          diagnosis: true,
+          createdAt: true,
+          completedAt: true,
+          timeSlot: {
+            select: {
+              startTime: true,
+              endTime: true,
+              dayOfWeek: true,
+            },
+          },
+          doctor: {
+            select: {
+              id: true,
+              professionalTitle: true,
+              user: { select: { fullName: true, avatar: true, phone: true } },
+              primarySpecialty: { select: { name: true } },
+            },
+          },
+        },
+      },
+    };
   }
 
   private buildFilterQuery(query: QueryPaymentDto): Prisma.PaymentWhereInput {

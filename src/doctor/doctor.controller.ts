@@ -27,7 +27,7 @@ import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles, CurrentUser } from '../auth/decorators';
 import { UserRole } from '../common/constants';
 
-@ApiTags('Public - Doctors')
+@ApiTags('Doctor')
 @Controller('doctors')
 export class DoctorController {
   constructor(private readonly doctorService: DoctorService) {}
@@ -53,7 +53,6 @@ export class DoctorController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DOCTOR)
   @ApiBearerAuth('JWT-auth')
-  @ApiTags('Doctor - My Patients')
   @ApiOperation({
     summary: 'Lấy danh sách bệnh nhân của bác sĩ',
     description: `
@@ -97,7 +96,6 @@ export class DoctorController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DOCTOR)
   @ApiBearerAuth('JWT-auth')
-  @ApiTags('Doctor - My Patients')
   @ApiOperation({
     summary: 'Xem chi tiết bệnh nhân',
     description: `
@@ -148,7 +146,6 @@ export class DoctorController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DOCTOR)
   @ApiBearerAuth('JWT-auth')
-  @ApiTags('Doctor - Consultation')
   @ApiOperation({
     summary: 'Cập nhật chẩn đoán và kê đơn thuốc',
     description: `
