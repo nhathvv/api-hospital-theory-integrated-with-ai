@@ -31,7 +31,7 @@ import { Roles } from '../../auth/decorators';
 @ApiTags('Admin - Medicine Batch Management')
 @ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
+@Roles(UserRole.ADMIN, UserRole.DOCTOR)
 @Controller('admin/medicine-batches')
 export class AdminMedicineBatchController {
   constructor(private readonly medicineBatchService: MedicineBatchService) {}

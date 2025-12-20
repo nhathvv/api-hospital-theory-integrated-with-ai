@@ -80,6 +80,8 @@ export class AppointmentService {
             symptoms,
             notes,
             consultationFee,
+            medicineFee: 0,
+            totalFee: consultationFee,
             status: AppointmentStatus.PENDING,
           },
           include: this.getAppointmentIncludes(),
@@ -849,6 +851,8 @@ export class AppointmentService {
       symptoms: appointment.symptoms,
       notes: appointment.notes,
       consultationFee: appointment.consultationFee,
+      medicineFee: appointment.medicineFee,
+      totalFee: appointment.totalFee,
       patient: {
         id: appointment.patient.id,
         name: appointment.patient.user.fullName,

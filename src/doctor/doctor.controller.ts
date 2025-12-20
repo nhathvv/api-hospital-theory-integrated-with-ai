@@ -26,11 +26,15 @@ import { DoctorStatus } from '@prisma/client';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles, CurrentUser } from '../auth/decorators';
 import { UserRole } from '../common/constants';
+import { PrescriptionService, UpdatePrescriptionDto } from '../prescription';
 
 @ApiTags('Doctor')
 @Controller('doctors')
 export class DoctorController {
-  constructor(private readonly doctorService: DoctorService) {}
+  constructor(
+    private readonly doctorService: DoctorService,
+    private readonly prescriptionService: PrescriptionService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all active doctors for patients' })
@@ -227,6 +231,87 @@ export class DoctorController {
       dto,
     );
     return ApiResponse.success(appointment, 'Cập nhật chẩn đoán thành công');
+  }
+
+  @Patch('appointments/:appointmentId/prescription')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Kê đơn thuốc cho lịch hẹn',
+    description: `
+      Bác sĩ kê đơn thuốc từ kho thuốc cho lịch hẹn.
+      
+      **Business Rules:**
+      - Chỉ có thể kê đơn cho lịch hẹn có trạng thái CONFIRMED, IN_PROGRESS hoặc COMPLETED
+      - Chỉ bác sĩ được gán lịch hẹn mới có quyền kê đơn
+      - Hệ thống tự động:
+        + Tính tiền thuốc (medicineFee) từ các item
+        + Cập nhật tổng tiền (totalFee = consultationFee + medicineFee)
+        + Trừ số lượng tồn kho của các lô thuốc
+        + Cập nhật trạng thái lô thuốc nếu cần (LOW_STOCK, OUT_OF_STOCK)
+      - Nếu kê đơn lại, đơn cũ sẽ bị xóa và hoàn lại số lượng thuốc vào kho
+    `,
+  })
+  @ApiParam({
+    name: 'appointmentId',
+    description: 'ID của lịch hẹn',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Kê đơn thuốc thành công',
+  })
+  @ApiResponseSwagger({
+    status: 400,
+    description: 'Lỗi validation hoặc không đủ tồn kho',
+  })
+  @ApiResponseSwagger({
+    status: 403,
+    description: 'Không có quyền kê đơn cho lịch hẹn này',
+  })
+  @ApiResponseSwagger({
+    status: 404,
+    description: 'Không tìm thấy lịch hẹn hoặc lô thuốc',
+  })
+  async updatePrescription(
+    @CurrentUser('doctorId') doctorId: string,
+    @Param('appointmentId') appointmentId: string,
+    @Body() dto: UpdatePrescriptionDto,
+  ) {
+    if (!doctorId) {
+      throw new ForbiddenException(
+        'Không tìm thấy thông tin bác sĩ. Vui lòng liên hệ quản trị viên.',
+      );
+    }
+    const result = await this.prescriptionService.createPrescription(
+      appointmentId,
+      doctorId,
+      dto,
+    );
+    return ApiResponse.success(result, 'Kê đơn thuốc thành công');
+  }
+
+  @Get('appointments/:appointmentId/prescription')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Xem đơn thuốc của lịch hẹn',
+    description: 'Lấy danh sách các thuốc đã kê cho lịch hẹn',
+  })
+  @ApiParam({
+    name: 'appointmentId',
+    description: 'ID của lịch hẹn',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Lấy đơn thuốc thành công',
+  })
+  async getPrescription(@Param('appointmentId') appointmentId: string) {
+    const items = await this.prescriptionService.getPrescription(appointmentId);
+    return ApiResponse.success(items, 'Lấy đơn thuốc thành công');
   }
 
   @Get(':id')

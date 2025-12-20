@@ -206,25 +206,28 @@ model Patient {
 
 model Appointment {
   id                 String                @id @default(uuid())
-  patientId          String                // Mã bệnh nhân
-  doctorId           String                // Mã bác sĩ
-  timeSlotId         String                // Mã khung giờ
+  patientId          String
+  doctorId           String
+  timeSlotId         String
   appointmentDate    DateTime              @db.Date
   status             AppointmentStatus     @default(PENDING)
-  examinationType    ExaminationType       // Loại hình khám (trực tiếp/online)
-  symptoms           String?               // Triệu chứng ban đầu
-  notes              String?               // Ghi chú của bệnh nhân
-  diagnosis          String?               // Chẩn đoán của bác sĩ
-  prescription       String?               // Đơn thuốc
+  examinationType    ExaminationType
+  symptoms           String?
+  notes              String?
+  diagnosis          String?
+  prescription       String?
   cancelledAt        DateTime?
   cancelledById      String?
-  cancellationReason CancellationReason?   // Lý do hủy
-  cancellationNote   String?               // Ghi chú khi hủy
-  consultationFee    Int?                  // Phí khám bệnh
-  completedAt        DateTime?             // Thời điểm hoàn thành
+  cancellationReason CancellationReason?
+  cancellationNote   String?
+  consultationFee    Int?
+  medicineFee        Int                   @default(0)
+  totalFee           Int                   @default(0)
+  completedAt        DateTime?
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
-  documents          AppointmentDocument[] // Tài liệu y tế của lịch hẹn
+  documents          AppointmentDocument[]
+  prescriptionItems  PrescriptionItem[]
   payment            Payment?
   doctor             Doctor                @relation(fields: [doctorId], references: [id])
   patient            Patient               @relation(fields: [patientId], references: [id])
@@ -295,24 +298,24 @@ model Medicine {
 }
   
 model MedicineBatch {
-  id              String      @id @default(uuid())
-  medicineId      String      // Mã thuốc
-  batchNumber     String      // Số lô (PARA-0825-01)
-  quantity        Int         // Số lượng nhập ban đầu
-  currentStock    Int         // Số lượng tồn kho hiện tại
-  unitPrice       Int         // Giá nhập (VND)
-  sellingPrice    Int         // Giá bán (VND)
-  manufactureDate DateTime?   // Ngày sản xuất
-  expiryDate      DateTime    // Hạn sử dụng
-  manufacturer    String?     // Nhà sản xuất
-  supplier        String?     // Nhà cung cấp
-  status          BatchStatus @default(IN_STOCK) // Trạng thái lô thuốc
-  notes           String?     // Ghi chú
-  deletedAt       DateTime?   // Thời điểm xóa mềm
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  medicine        Medicine    @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  id                String             @id @default(uuid())
+  medicineId        String
+  batchNumber       String
+  quantity          Int
+  currentStock      Int
+  unitPrice         Int
+  sellingPrice      Int
+  manufactureDate   DateTime?
+  expiryDate        DateTime
+  manufacturer      String?
+  supplier          String?
+  status            BatchStatus        @default(IN_STOCK)
+  notes             String?
+  deletedAt         DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  medicine          Medicine           @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  prescriptionItems PrescriptionItem[]
 
   @@unique([medicineId, batchNumber])
   @@index([medicineId])
@@ -320,6 +323,25 @@ model MedicineBatch {
   @@index([status])
   @@index([deletedAt])
   @@map("medicine_batches")
+}
+
+model PrescriptionItem {
+  id              String        @id @default(uuid())
+  appointmentId   String
+  medicineBatchId String
+  quantity        Int
+  dosage          String
+  instructions    String?
+  unitPrice       Int
+  totalPrice      Int
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  appointment     Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  medicineBatch   MedicineBatch @relation(fields: [medicineBatchId], references: [id])
+
+  @@index([appointmentId])
+  @@index([medicineBatchId])
+  @@map("prescription_items")
 }
 
 model Payment {

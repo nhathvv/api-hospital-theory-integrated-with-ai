@@ -26,7 +26,6 @@ export class PaymentService {
     return payment;
   }
 
-
   async findMyPayments(patientId: string, query: QueryMyPaymentDto) {
     return this.paymentRepository.findByPatientId(patientId, query);
   }
@@ -105,9 +104,9 @@ export class PaymentService {
       );
     }
 
-    if (appointment.consultationFee !== transferAmount) {
+    if (appointment.totalFee !== transferAmount) {
       ExceptionUtils.throwBadRequest(
-        `Consultation fee (${appointment.consultationFee}) does not match payment amount (${transferAmount})`,
+        `Total fee (${appointment.totalFee}) does not match payment amount (${transferAmount})`,
       );
     }
 
