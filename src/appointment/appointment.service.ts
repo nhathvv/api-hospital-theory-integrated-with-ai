@@ -291,6 +291,230 @@ export class AppointmentService {
     return this.formatCancelledAppointmentResponse(result, result.payment);
   }
 
+  async updateStatus(appointmentId: string, newStatus: AppointmentStatus) {
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: { payment: true },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Không tìm thấy lịch hẹn');
+    }
+
+    const validTransitions: Record<AppointmentStatus, AppointmentStatus[]> = {
+      [AppointmentStatus.PENDING]: [
+        AppointmentStatus.CONFIRMED,
+        AppointmentStatus.CANCELLED,
+      ],
+      [AppointmentStatus.CONFIRMED]: [
+        AppointmentStatus.IN_PROGRESS,
+        AppointmentStatus.CANCELLED,
+        AppointmentStatus.NO_SHOW,
+      ],
+      [AppointmentStatus.IN_PROGRESS]: [AppointmentStatus.COMPLETED],
+      [AppointmentStatus.COMPLETED]: [],
+      [AppointmentStatus.CANCELLED]: [],
+      [AppointmentStatus.NO_SHOW]: [],
+    };
+
+    if (!validTransitions[appointment.status].includes(newStatus)) {
+      throw new BadRequestException(
+        `Không thể chuyển từ trạng thái ${this.getStatusVietnamese(appointment.status)} sang ${this.getStatusVietnamese(newStatus)}`,
+      );
+    }
+
+    const updateData: any = { status: newStatus };
+    if (newStatus === AppointmentStatus.COMPLETED) {
+      updateData.completedAt = new Date();
+    }
+
+    const updated = await this.prisma.appointment.update({
+      where: { id: appointmentId },
+      data: updateData,
+      include: {
+        ...this.getAppointmentIncludes(),
+        payment: {
+          select: {
+            id: true,
+            paymentCode: true,
+            method: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    this.logger.log(
+      `Appointment status updated: ${appointmentId} from ${appointment.status} to ${newStatus}`,
+    );
+
+    return this.formatAppointmentResponse(updated, updated.payment);
+  }
+
+  async cancelByPatient(
+    appointmentId: string,
+    patientId: string,
+    cancelDto: CancelAppointmentDto,
+  ) {
+    const { reason, note } = cancelDto;
+
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        patient: {
+          select: {
+            id: true,
+            userId: true,
+          },
+        },
+        payment: {
+          select: {
+            id: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Không tìm thấy lịch hẹn');
+    }
+
+    if (appointment.patient.id !== patientId) {
+      throw new ForbiddenException('Bạn không có quyền hủy lịch hẹn này');
+    }
+
+    if (appointment.status !== AppointmentStatus.PENDING) {
+      throw new BadRequestException(
+        'Chỉ có thể hủy lịch hẹn đang chờ xác nhận (PENDING). Vui lòng liên hệ hotline để được hỗ trợ.',
+      );
+    }
+
+    const result = await TransactionUtils.executeInTransaction(
+      this.prisma,
+      async (tx) => {
+        const updatedAppointment = await tx.appointment.update({
+          where: { id: appointmentId },
+          data: {
+            status: AppointmentStatus.CANCELLED,
+            cancelledAt: new Date(),
+            cancelledById: appointment.patient.userId,
+            cancellationReason: reason,
+            cancellationNote: note,
+          },
+          include: {
+            ...this.getAppointmentIncludes(),
+            payment: {
+              select: {
+                id: true,
+                paymentCode: true,
+                method: true,
+                status: true,
+              },
+            },
+          },
+        });
+
+        if (
+          appointment.payment &&
+          appointment.payment.status === PaymentStatus.PENDING
+        ) {
+          await tx.payment.update({
+            where: { id: appointment.payment.id },
+            data: { status: PaymentStatus.FAILED },
+          });
+        }
+
+        return updatedAppointment;
+      },
+    );
+
+    this.logger.log(
+      `Appointment cancelled by patient: ${appointmentId}, reason: ${reason}`,
+    );
+
+    return this.formatCancelledAppointmentResponse(result, result.payment);
+  }
+
+  async cancelByAdmin(
+    appointmentId: string,
+    adminUserId: string,
+    cancelDto: CancelAppointmentDto,
+  ) {
+    const { reason, note } = cancelDto;
+
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        payment: {
+          select: {
+            id: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Không tìm thấy lịch hẹn');
+    }
+
+    const cancellableStatuses: AppointmentStatus[] = [
+      AppointmentStatus.PENDING,
+      AppointmentStatus.CONFIRMED,
+    ];
+    if (!cancellableStatuses.includes(appointment.status)) {
+      throw new BadRequestException(
+        `Không thể hủy lịch hẹn với trạng thái ${this.getStatusVietnamese(appointment.status)}`,
+      );
+    }
+
+    const result = await TransactionUtils.executeInTransaction(
+      this.prisma,
+      async (tx) => {
+        const updatedAppointment = await tx.appointment.update({
+          where: { id: appointmentId },
+          data: {
+            status: AppointmentStatus.CANCELLED,
+            cancelledAt: new Date(),
+            cancelledById: adminUserId,
+            cancellationReason: reason,
+            cancellationNote: note,
+          },
+          include: {
+            ...this.getAppointmentIncludes(),
+            payment: {
+              select: {
+                id: true,
+                paymentCode: true,
+                method: true,
+                status: true,
+              },
+            },
+          },
+        });
+
+        if (
+          appointment.payment &&
+          appointment.payment.status === PaymentStatus.PENDING
+        ) {
+          await tx.payment.update({
+            where: { id: appointment.payment.id },
+            data: { status: PaymentStatus.FAILED },
+          });
+        }
+
+        return updatedAppointment;
+      },
+    );
+
+    this.logger.log(
+      `Appointment cancelled by admin: ${appointmentId}, reason: ${reason}`,
+    );
+
+    return this.formatCancelledAppointmentResponse(result, result.payment);
+  }
+
   private getStatusVietnamese(status: AppointmentStatus): string {
     const statusMap: Record<AppointmentStatus, string> = {
       [AppointmentStatus.PENDING]: 'Chờ xác nhận',

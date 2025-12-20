@@ -8,6 +8,7 @@ import { AdminMedicineCategoryController } from './medicine-category/admin-medic
 import { AdminMedicineController } from './medicine/admin-medicine.controller';
 import { AdminMedicineBatchController } from './medicine-batch/admin-medicine-batch.controller';
 import { AdminPaymentController } from './payment/admin-payment.controller';
+import { AdminAppointmentController } from './appointment/admin-appointment.controller';
 import { DoctorModule } from '../doctor';
 import { PatientModule } from '../patient';
 import { DepartmentModule } from '../department';
@@ -17,6 +18,7 @@ import { MedicineCategoryModule } from '../medicine-category';
 import { MedicineModule } from '../medicine';
 import { MedicineBatchModule } from '../medicine-batch';
 import { PaymentModule } from '../payment';
+import { AppointmentModule } from '../appointment';
 
 @Module({
   imports: [
@@ -29,6 +31,7 @@ import { PaymentModule } from '../payment';
     MedicineModule,
     MedicineBatchModule,
     PaymentModule,
+    AppointmentModule,
   ],
   controllers: [
     AdminDoctorController,
@@ -40,6 +43,7 @@ import { PaymentModule } from '../payment';
     AdminMedicineController,
     AdminMedicineBatchController,
     AdminPaymentController,
+    AdminAppointmentController,
   ],
 })
 export class AdminModule {}

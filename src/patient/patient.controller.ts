@@ -6,6 +6,7 @@ import {
   Param,
   Query,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,6 +23,7 @@ import { UserRole } from '../common/constants';
 import { ApiResponse, PaginatedResponse } from '../common/dto';
 import { ExceptionUtils } from '../common/utils';
 import { PaymentService, QueryMyPaymentDto } from '../payment';
+import { AppointmentService, CancelAppointmentDto } from '../appointment';
 
 @ApiTags('Patient')
 @ApiBearerAuth('JWT-auth')
@@ -32,6 +34,7 @@ export class PatientController {
   constructor(
     private readonly patientService: PatientService,
     private readonly paymentService: PaymentService,
+    private readonly appointmentService: AppointmentService,
   ) {}
 
   @Patch('me')
@@ -100,5 +103,53 @@ export class PatientController {
     }
     const payment = await this.paymentService.findMyPaymentById(id, patient.id);
     return ApiResponse.success(payment, 'Payment detail retrieved successfully');
+  }
+
+  @Patch('me/appointments/:id/cancel')
+  @ApiOperation({
+    summary: 'Cancel my appointment',
+    description: `
+      Bệnh nhân hủy lịch hẹn của mình.
+      
+      **Lưu ý quan trọng:**
+      - Chỉ có thể hủy lịch hẹn đang ở trạng thái **PENDING** (chờ xác nhận)
+      - Không thể hủy lịch hẹn đã được xác nhận (CONFIRMED)
+      - Nếu cần hủy lịch đã xác nhận, vui lòng liên hệ hotline hỗ trợ
+    `,
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Appointment ID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Appointment cancelled successfully',
+  })
+  @ApiResponseSwagger({
+    status: 400,
+    description: 'Cannot cancel confirmed appointment',
+  })
+  @ApiResponseSwagger({
+    status: 403,
+    description: 'Not authorized to cancel this appointment',
+  })
+  @ApiResponseSwagger({ status: 404, description: 'Appointment not found' })
+  async cancelMyAppointment(
+    @CurrentUser('patientId') patientId: string,
+    @Param('id') appointmentId: string,
+    @Body() cancelDto: CancelAppointmentDto,
+  ) {
+    if (!patientId) {
+      throw new ForbiddenException(
+        'Không tìm thấy thông tin bệnh nhân. Vui lòng liên hệ quản trị viên.',
+      );
+    }
+    const appointment = await this.appointmentService.cancelByPatient(
+      appointmentId,
+      patientId,
+      cancelDto,
+    );
+    return ApiResponse.success(appointment, 'Hủy lịch hẹn thành công');
   }
 }
