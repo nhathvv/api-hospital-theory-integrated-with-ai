@@ -21,10 +21,10 @@ export class AdminPatientController {
   constructor(private readonly patientService: PatientService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all patients with filters' })
+  @ApiOperation({ summary: 'Lấy danh sách bệnh nhân với bộ lọc' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Patients retrieved successfully',
+    description: 'Lấy danh sách bệnh nhân thành công',
   })
   async findAll(@Query() query: QueryPatientDto) {
     const result = await this.patientService.findAll(query);
@@ -32,19 +32,19 @@ export class AdminPatientController {
       result.data,
       result.total,
       query,
-      'Patients retrieved successfully',
+      'Lấy danh sách bệnh nhân thành công',
     );
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get patient detail by ID' })
+  @ApiOperation({ summary: 'Lấy chi tiết bệnh nhân' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Patient retrieved successfully',
+    description: 'Lấy thông tin bệnh nhân thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Patient not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy bệnh nhân' })
   async findOne(@Param('id') id: string) {
     const patient = await this.patientService.findOne(id);
-    return ApiResponse.success(patient, 'Patient retrieved successfully');
+    return ApiResponse.success(patient, 'Lấy thông tin bệnh nhân thành công');
   }
 }

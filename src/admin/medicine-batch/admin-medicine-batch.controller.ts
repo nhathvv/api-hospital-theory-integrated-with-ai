@@ -38,10 +38,10 @@ export class AdminMedicineBatchController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get all medicine batches with pagination' })
+  @ApiOperation({ summary: 'Lấy danh sách lô thuốc với phân trang' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Medicine batches retrieved successfully',
+    description: 'Lấy danh sách lô thuốc thành công',
   })
   async findAll(@Query() query: QueryMedicineBatchDto) {
     const result = await this.medicineBatchService.findAll(query);
@@ -49,7 +49,7 @@ export class AdminMedicineBatchController {
       result.data,
       result.total,
       query,
-      'Medicine batches retrieved successfully',
+      'Lấy danh sách lô thuốc thành công',
     );
   }
 

@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Query,
   Param,
@@ -34,10 +35,10 @@ export class AdminAppointmentController {
   constructor(private readonly appointmentService: AppointmentService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all appointments with filters' })
+  @ApiOperation({ summary: 'Lấy danh sách lịch hẹn với bộ lọc' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Appointments retrieved successfully',
+    description: 'Lấy danh sách lịch hẹn thành công',
   })
   async findAll(@Query() query: QueryAppointmentDto) {
     const { data, totalItems } = await this.appointmentService.findAll(query);
@@ -45,34 +46,34 @@ export class AdminAppointmentController {
       data,
       totalItems,
       query,
-      'Appointments retrieved successfully',
+      'Lấy danh sách lịch hẹn thành công',
     );
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get appointment detail by ID' })
+  @ApiOperation({ summary: 'Lấy chi tiết lịch hẹn' })
   @ApiParam({
     name: 'id',
-    description: 'Appointment ID',
+    description: 'ID lịch hẹn',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Appointment retrieved successfully',
+    description: 'Lấy thông tin lịch hẹn thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Appointment not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy lịch hẹn' })
   async findById(@Param('id') id: string) {
     const appointment = await this.appointmentService.findById(id);
-    return ApiResponse.success(appointment, 'Appointment retrieved successfully');
+    return ApiResponse.success(appointment, 'Lấy thông tin lịch hẹn thành công');
   }
 
   @Patch(':id/status')
   @ApiOperation({
-    summary: 'Update appointment status',
+    summary: 'Cập nhật trạng thái lịch hẹn',
     description: `
-      Admin can update appointment status.
+      Admin có thể cập nhật trạng thái lịch hẹn.
       
-      **Valid status transitions:**
+      **Chuyển đổi trạng thái hợp lệ:**
       - PENDING → CONFIRMED, CANCELLED
       - CONFIRMED → IN_PROGRESS, CANCELLED, NO_SHOW
       - IN_PROGRESS → COMPLETED
@@ -80,45 +81,45 @@ export class AdminAppointmentController {
   })
   @ApiParam({
     name: 'id',
-    description: 'Appointment ID',
+    description: 'ID lịch hẹn',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Appointment status updated successfully',
+    description: 'Cập nhật trạng thái lịch hẹn thành công',
   })
   @ApiResponseSwagger({
     status: 400,
-    description: 'Invalid status transition',
+    description: 'Chuyển đổi trạng thái không hợp lệ',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Appointment not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy lịch hẹn' })
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateAppointmentStatusDto,
   ) {
     const appointment = await this.appointmentService.updateStatus(id, dto.status);
-    return ApiResponse.success(appointment, 'Appointment status updated successfully');
+    return ApiResponse.success(appointment, 'Cập nhật trạng thái lịch hẹn thành công');
   }
 
-  @Patch(':id/cancel')
+  @Post(':id/cancel')
   @ApiOperation({
-    summary: 'Cancel appointment',
-    description: 'Admin can cancel any appointment with PENDING or CONFIRMED status',
+    summary: 'Hủy lịch hẹn',
+    description: 'Admin có thể hủy bất kỳ lịch hẹn nào có trạng thái PENDING hoặc CONFIRMED',
   })
   @ApiParam({
     name: 'id',
-    description: 'Appointment ID',
+    description: 'ID lịch hẹn',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Appointment cancelled successfully',
+    description: 'Hủy lịch hẹn thành công',
   })
   @ApiResponseSwagger({
     status: 400,
-    description: 'Cannot cancel appointment with current status',
+    description: 'Không thể hủy lịch hẹn với trạng thái hiện tại',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Appointment not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy lịch hẹn' })
   async cancel(
     @Param('id') id: string,
     @CurrentUser('id') userId: string,
@@ -129,6 +130,6 @@ export class AdminAppointmentController {
       userId,
       cancelDto,
     );
-    return ApiResponse.success(appointment, 'Appointment cancelled successfully');
+    return ApiResponse.success(appointment, 'Hủy lịch hẹn thành công');
   }
 }

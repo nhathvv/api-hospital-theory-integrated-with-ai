@@ -38,29 +38,29 @@ export class AdminDepartmentController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new department' })
+  @ApiOperation({ summary: 'Tạo khoa/phòng ban mới' })
   @ApiResponseSwagger({
     status: 201,
-    description: 'Department created successfully',
+    description: 'Tạo khoa/phòng ban thành công',
   })
   @ApiResponseSwagger({
     status: 409,
-    description: 'Department name or code already exists',
+    description: 'Tên hoặc mã khoa/phòng ban đã tồn tại',
   })
   async create(@Body() createDepartmentDto: CreateDepartmentDto) {
     const department = await this.departmentService.create(createDepartmentDto);
     return ApiResponse.success(
       department,
-      'Department created successfully',
+      'Tạo khoa/phòng ban thành công',
       201,
     );
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all departments with pagination' })
+  @ApiOperation({ summary: 'Lấy danh sách khoa/phòng ban với phân trang' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Departments retrieved successfully',
+    description: 'Lấy danh sách khoa/phòng ban thành công',
   })
   async findAll(@Query() query: QueryDepartmentDto) {
     const result = await this.departmentService.findAll(query);
@@ -68,32 +68,32 @@ export class AdminDepartmentController {
       result.data,
       result.total,
       query,
-      'Departments retrieved successfully',
+      'Lấy danh sách khoa/phòng ban thành công',
     );
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a department by ID' })
+  @ApiOperation({ summary: 'Lấy chi tiết khoa/phòng ban' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Department retrieved successfully',
+    description: 'Lấy thông tin khoa/phòng ban thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Department not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy khoa/phòng ban' })
   async findOne(@Param('id') id: string) {
     const department = await this.departmentService.findOne(id);
-    return ApiResponse.success(department, 'Department retrieved successfully');
+    return ApiResponse.success(department, 'Lấy thông tin khoa/phòng ban thành công');
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a department' })
+  @ApiOperation({ summary: 'Cập nhật khoa/phòng ban' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Department updated successfully',
+    description: 'Cập nhật khoa/phòng ban thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Department not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy khoa/phòng ban' })
   @ApiResponseSwagger({
     status: 409,
-    description: 'Department name or code already exists',
+    description: 'Tên hoặc mã khoa/phòng ban đã tồn tại',
   })
   async update(
     @Param('id') id: string,
@@ -103,19 +103,19 @@ export class AdminDepartmentController {
       id,
       updateDepartmentDto,
     );
-    return ApiResponse.success(department, 'Department updated successfully');
+    return ApiResponse.success(department, 'Cập nhật khoa/phòng ban thành công');
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Delete a department' })
+  @ApiOperation({ summary: 'Xóa khoa/phòng ban' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Department deleted successfully',
+    description: 'Xóa khoa/phòng ban thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Department not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy khoa/phòng ban' })
   async remove(@Param('id') id: string) {
     const department = await this.departmentService.remove(id);
-    return ApiResponse.success(department, 'Department deleted successfully');
+    return ApiResponse.success(department, 'Xóa khoa/phòng ban thành công');
   }
 }

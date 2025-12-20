@@ -30,10 +30,10 @@ export class AdminDoctorController {
   constructor(private readonly doctorService: DoctorService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all doctors with filters' })
+  @ApiOperation({ summary: 'Lấy danh sách bác sĩ với bộ lọc' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Doctors retrieved successfully',
+    description: 'Lấy danh sách bác sĩ thành công',
   })
   async findAll(@Query() query: QueryDoctorDto) {
     const result = await this.doctorService.findAll(query);
@@ -41,46 +41,46 @@ export class AdminDoctorController {
       result.data,
       result.total,
       query,
-      'Doctors retrieved successfully',
+      'Lấy danh sách bác sĩ thành công',
     );
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get doctor detail by ID' })
+  @ApiOperation({ summary: 'Lấy chi tiết bác sĩ' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Doctor retrieved successfully',
+    description: 'Lấy thông tin bác sĩ thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Doctor not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy bác sĩ' })
   async findOne(@Param('id') id: string) {
     const doctor = await this.doctorService.findOne(id);
-    return ApiResponse.success(doctor, 'Doctor retrieved successfully');
+    return ApiResponse.success(doctor, 'Lấy thông tin bác sĩ thành công');
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create new doctor' })
+  @ApiOperation({ summary: 'Tạo bác sĩ mới' })
   @ApiResponseSwagger({
     status: 201,
-    description: 'Doctor created successfully',
+    description: 'Tạo bác sĩ thành công',
   })
   @ApiResponseSwagger({
     status: 409,
-    description: 'Email or license already exists',
+    description: 'Email hoặc số giấy phép đã tồn tại',
   })
   async create(@Body() createDoctorDto: CreateDoctorDto) {
     const doctor = await this.doctorService.create(createDoctorDto);
-    return ApiResponse.success(doctor, 'Doctor created successfully', 201);
+    return ApiResponse.success(doctor, 'Tạo bác sĩ thành công', 201);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Soft delete doctor by ID' })
+  @ApiOperation({ summary: 'Xóa mềm bác sĩ' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Doctor deleted successfully',
+    description: 'Xóa bác sĩ thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Doctor not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy bác sĩ' })
   async remove(@Param('id') id: string) {
     await this.doctorService.remove(id);
-    return ApiResponse.success(null, 'Doctor deleted successfully');
+    return ApiResponse.success(null, 'Xóa bác sĩ thành công');
   }
 }

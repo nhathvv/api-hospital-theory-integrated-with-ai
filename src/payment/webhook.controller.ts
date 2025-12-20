@@ -23,18 +23,18 @@ export class WebhookController {
   @Post('payments')
   @HttpCode(HttpStatus.OK)
   @UseGuards(PaymentApiKeyGuard)
-  @ApiOperation({ summary: 'Receive payment webhook from payment gateway' })
+  @ApiOperation({ summary: 'Nhận webhook thanh toán từ cổng thanh toán' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Payment webhook processed successfully',
+    description: 'Xử lý webhook thanh toán thành công',
   })
   @ApiResponseSwagger({
     status: 400,
-    description: 'Bad request - invalid payment data',
+    description: 'Dữ liệu thanh toán không hợp lệ',
   })
   @ApiResponseSwagger({
     status: 401,
-    description: 'Unauthorized - invalid API key',
+    description: 'API key không hợp lệ',
   })
   async receivePayment(@Body() data: WebhookPaymentBodyDto) {
     return this.paymentService.receiver(data);

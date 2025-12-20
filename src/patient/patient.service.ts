@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma';
-import { UpdatePatientDto, QueryPatientDto } from './dto';
-import { Prisma } from '@prisma/client';
+import {
+  UpdatePatientDto,
+  QueryPatientDto,
+  QueryConsultationHistoryDto,
+} from './dto';
+import { AppointmentStatus, Prisma } from '@prisma/client';
 import { TransactionUtils } from '../common/utils';
 
 @Injectable()
@@ -108,6 +112,180 @@ export class PatientService {
     }
 
     return patient;
+  }
+
+  async findMyConsultationHistory(
+    patientId: string,
+    query: QueryConsultationHistoryDto,
+  ) {
+    const where = this.buildConsultationHistoryFilter(patientId, query);
+
+    const [consultations, total] = await Promise.all([
+      this.prisma.appointment.findMany({
+        where,
+        ...query.getPrismaParams(),
+        orderBy: { appointmentDate: 'desc' },
+        include: this.getConsultationHistoryIncludes(),
+      }),
+      this.prisma.appointment.count({ where }),
+    ]);
+
+    return { data: consultations, total };
+  }
+
+  async findConsultationById(patientId: string, appointmentId: string) {
+    const consultation = await this.prisma.appointment.findFirst({
+      where: {
+        id: appointmentId,
+        patientId,
+        status: 'COMPLETED',
+      },
+      include: this.getConsultationDetailIncludes(),
+    });
+
+    if (!consultation) {
+      throw new NotFoundException('Consultation not found');
+    }
+
+    return consultation;
+  }
+
+  private buildConsultationHistoryFilter(
+    patientId: string,
+    query: QueryConsultationHistoryDto,
+  ): Prisma.AppointmentWhereInput {
+    const where: Prisma.AppointmentWhereInput = {
+      patientId,
+      status: { in: [AppointmentStatus.COMPLETED, AppointmentStatus.IN_PROGRESS] },
+    };
+
+    if (query.startDate || query.endDate) {
+      where.appointmentDate = {};
+      if (query.startDate) {
+        where.appointmentDate.gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        where.appointmentDate.lte = new Date(query.endDate);
+      }
+    }
+
+    if (query.doctorId) {
+      where.doctorId = query.doctorId;
+    }
+
+    if (query.keyword) {
+      where.diagnosis = { contains: query.keyword, mode: 'insensitive' };
+    }
+
+    return where;
+  }
+
+  private getConsultationHistoryIncludes() {
+    return {
+      doctor: {
+        select: {
+          id: true,
+          professionalTitle: true,
+          user: {
+            select: {
+              fullName: true,
+              avatar: true,
+            },
+          },
+          primarySpecialty: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      timeSlot: {
+        select: {
+          startTime: true,
+          endTime: true,
+        },
+      },
+    };
+  }
+
+  private getConsultationDetailIncludes() {
+    return {
+      doctor: {
+        select: {
+          id: true,
+          professionalTitle: true,
+          bio: true,
+          user: {
+            select: {
+              fullName: true,
+              avatar: true,
+              phone: true,
+              email: true,
+            },
+          },
+          primarySpecialty: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      timeSlot: {
+        select: {
+          startTime: true,
+          endTime: true,
+          dayOfWeek: true,
+          examinationType: true,
+        },
+      },
+      prescriptionItems: {
+        select: {
+          id: true,
+          quantity: true,
+          dosage: true,
+          instructions: true,
+          unitPrice: true,
+          totalPrice: true,
+          medicineBatch: {
+            select: {
+              id: true,
+              batchNumber: true,
+              medicine: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true,
+                  unit: true,
+                  dosage: true,
+                  activeIngredient: true,
+                },
+              },
+            },
+          },
+        },
+      },
+      documents: {
+        select: {
+          id: true,
+          title: true,
+          documentType: true,
+          documentUrl: true,
+          notes: true,
+          createdAt: true,
+        },
+      },
+      payment: {
+        select: {
+          id: true,
+          paymentCode: true,
+          status: true,
+          method: true,
+          createdAt: true,
+        },
+      },
+    };
   }
 
   private buildFilterQuery(query: QueryPatientDto): Prisma.PatientWhereInput {

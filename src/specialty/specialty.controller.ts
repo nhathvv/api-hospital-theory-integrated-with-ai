@@ -14,10 +14,10 @@ export class SpecialtyController {
   constructor(private readonly specialtyService: SpecialtyService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all active specialties for patients' })
+  @ApiOperation({ summary: 'Lấy danh sách chuyên khoa đang hoạt động' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Specialties retrieved successfully',
+    description: 'Lấy danh sách chuyên khoa thành công',
   })
   async findAll(@Query() query: QuerySpecialtyDto) {
     query.isActive = true;
@@ -26,19 +26,19 @@ export class SpecialtyController {
       result.data,
       result.total,
       query,
-      'Specialties retrieved successfully',
+      'Lấy danh sách chuyên khoa thành công',
     );
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get specialty detail by ID' })
+  @ApiOperation({ summary: 'Lấy chi tiết chuyên khoa' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Specialty retrieved successfully',
+    description: 'Lấy thông tin chuyên khoa thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Specialty not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy chuyên khoa' })
   async findOne(@Param('id') id: string) {
     const specialty = await this.specialtyService.findOne(id);
-    return ApiResponse.success(specialty, 'Specialty retrieved successfully');
+    return ApiResponse.success(specialty, 'Lấy thông tin chuyên khoa thành công');
   }
 }

@@ -21,10 +21,10 @@ export class AdminPaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all payments/transactions with filters' })
+  @ApiOperation({ summary: 'Lấy danh sách thanh toán với bộ lọc' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Payments retrieved successfully',
+    description: 'Lấy danh sách thanh toán thành công',
   })
   async findAll(@Query() query: QueryPaymentDto) {
     const result = await this.paymentService.findAll(query);
@@ -32,19 +32,19 @@ export class AdminPaymentController {
       result.data,
       result.total,
       query,
-      'Payments retrieved successfully',
+      'Lấy danh sách thanh toán thành công',
     );
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get payment detail by ID' })
+  @ApiOperation({ summary: 'Lấy chi tiết thanh toán' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Payment retrieved successfully',
+    description: 'Lấy thông tin thanh toán thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Payment not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy thanh toán' })
   async findOne(@Param('id') id: string) {
     const payment = await this.paymentService.findOne(id);
-    return ApiResponse.success(payment, 'Payment retrieved successfully');
+    return ApiResponse.success(payment, 'Lấy thông tin thanh toán thành công');
   }
 }

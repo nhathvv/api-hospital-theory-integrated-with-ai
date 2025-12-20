@@ -31,32 +31,32 @@ export class AdminMedicineController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new medicine' })
+  @ApiOperation({ summary: 'Tạo thuốc mới' })
   @ApiResponseSwagger({
     status: 201,
-    description: 'Medicine created successfully',
+    description: 'Tạo thuốc thành công',
   })
   @ApiResponseSwagger({
     status: 409,
-    description: 'Medicine code already exists',
+    description: 'Mã thuốc đã tồn tại',
   })
   @ApiResponseSwagger({
     status: 404,
-    description: 'Medicine category not found',
+    description: 'Không tìm thấy danh mục thuốc',
   })
   async create(@Body() dto: CreateMedicineDto) {
     const medicine = await this.medicineService.create(dto);
-    return ApiResponse.success(medicine, 'Medicine created successfully', 201);
+    return ApiResponse.success(medicine, 'Tạo thuốc thành công', 201);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all medicines (no pagination)' })
+  @ApiOperation({ summary: 'Lấy danh sách thuốc' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Medicines retrieved successfully',
+    description: 'Lấy danh sách thuốc thành công',
   })
   async findAll(@Query() query: QueryMedicineDto) {
     const medicines = await this.medicineService.findAll(query);
-    return ApiResponse.success(medicines, 'Medicines retrieved successfully');
+    return ApiResponse.success(medicines, 'Lấy danh sách thuốc thành công');
   }
 }

@@ -36,35 +36,31 @@ export class AdminMedicineCategoryController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new medicine category' })
+  @ApiOperation({ summary: 'Tạo danh mục thuốc mới' })
   @ApiResponseSwagger({
     status: 201,
-    description: 'Medicine category created successfully',
+    description: 'Tạo danh mục thuốc thành công',
   })
   @ApiResponseSwagger({
     status: 409,
-    description: 'Medicine category name or code already exists',
+    description: 'Tên hoặc mã danh mục thuốc đã tồn tại',
   })
   async create(@Body() dto: CreateMedicineCategoryDto) {
     const category = await this.medicineCategoryService.create(dto);
-    return ApiResponse.success(
-      category,
-      'Medicine category created successfully',
-      201,
-    );
+    return ApiResponse.success(category, 'Tạo danh mục thuốc thành công', 201);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all medicine categories (no pagination)' })
+  @ApiOperation({ summary: 'Lấy danh sách danh mục thuốc' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Medicine categories retrieved successfully',
+    description: 'Lấy danh sách danh mục thuốc thành công',
   })
   async findAll(@Query() query: QueryMedicineCategoryDto) {
     const categories = await this.medicineCategoryService.findAll(query);
     return ApiResponse.success(
       categories,
-      'Medicine categories retrieved successfully',
+      'Lấy danh sách danh mục thuốc thành công',
     );
   }
 }

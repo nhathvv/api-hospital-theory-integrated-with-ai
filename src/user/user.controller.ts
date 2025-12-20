@@ -18,18 +18,18 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('me')
-  @ApiOperation({ summary: 'Get current authenticated user profile' })
+  @ApiOperation({ summary: 'Lấy thông tin người dùng hiện tại' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'User profile retrieved successfully',
+    description: 'Lấy thông tin người dùng thành công',
   })
-  @ApiResponseSwagger({ status: 401, description: 'Unauthorized' })
-  @ApiResponseSwagger({ status: 404, description: 'User not found' })
+  @ApiResponseSwagger({ status: 401, description: 'Chưa xác thực' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy người dùng' })
   async getMe(
     @CurrentUser('sub') userId: string,
     @CurrentUser('role') role: string,
   ) {
     const data = await this.userService.getMe(userId, role);
-    return ApiResponse.success(data, 'User profile retrieved successfully');
+    return ApiResponse.success(data, 'Lấy thông tin người dùng thành công');
   }
 }

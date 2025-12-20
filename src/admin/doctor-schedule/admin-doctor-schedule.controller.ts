@@ -39,23 +39,23 @@ export class AdminDoctorScheduleController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create doctor schedule' })
+  @ApiOperation({ summary: 'Tạo lịch làm việc bác sĩ' })
   @ApiResponseSwagger({
     status: 201,
-    description: 'Schedule created successfully',
+    description: 'Tạo lịch làm việc thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Doctor not found' })
-  @ApiResponseSwagger({ status: 409, description: 'Schedule overlaps' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy bác sĩ' })
+  @ApiResponseSwagger({ status: 409, description: 'Lịch làm việc bị trùng' })
   async create(@Body() createDto: CreateDoctorScheduleDto) {
     const schedule = await this.doctorScheduleService.create(createDto);
-    return ApiResponse.success(schedule, 'Schedule created successfully', 201);
+    return ApiResponse.success(schedule, 'Tạo lịch làm việc thành công', 201);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all schedules with pagination' })
+  @ApiOperation({ summary: 'Lấy danh sách lịch làm việc với phân trang' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Schedules retrieved successfully',
+    description: 'Lấy danh sách lịch làm việc thành công',
   })
   async findAll(@Query() query: QueryDoctorScheduleDto) {
     const result = await this.doctorScheduleService.findAll(query);
@@ -63,43 +63,43 @@ export class AdminDoctorScheduleController {
       result.data,
       result.total,
       query,
-      'Schedules retrieved successfully',
+      'Lấy danh sách lịch làm việc thành công',
     );
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get schedule detail by ID' })
+  @ApiOperation({ summary: 'Lấy chi tiết lịch làm việc' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Schedule retrieved successfully',
+    description: 'Lấy thông tin lịch làm việc thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Schedule not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy lịch làm việc' })
   async findOne(@Param('id') id: string) {
     const schedule = await this.doctorScheduleService.findOne(id);
-    return ApiResponse.success(schedule, 'Schedule retrieved successfully');
+    return ApiResponse.success(schedule, 'Lấy thông tin lịch làm việc thành công');
   }
 
   @Get('doctor/:doctorId')
-  @ApiOperation({ summary: 'Get schedules by doctor ID' })
+  @ApiOperation({ summary: 'Lấy lịch làm việc theo bác sĩ' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Schedules retrieved successfully',
+    description: 'Lấy lịch làm việc thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Doctor not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy bác sĩ' })
   async findByDoctorId(@Param('doctorId') doctorId: string) {
     const schedules = await this.doctorScheduleService.findByDoctorId(doctorId);
-    return ApiResponse.success(schedules, 'Schedules retrieved successfully');
+    return ApiResponse.success(schedules, 'Lấy lịch làm việc thành công');
   }
 
   @Get('doctor/:doctorId/available-slots')
   @ApiOperation({
-    summary: 'Get available slots for a doctor on specific date',
+    summary: 'Lấy khung giờ trống của bác sĩ theo ngày',
   })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Available slots retrieved successfully',
+    description: 'Lấy khung giờ trống thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Doctor not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy bác sĩ' })
   async getAvailableSlots(
     @Param('doctorId') doctorId: string,
     @Query() query: QueryAvailableSlotsDto,
@@ -108,35 +108,35 @@ export class AdminDoctorScheduleController {
       doctorId,
       query,
     );
-    return ApiResponse.success(slots, 'Available slots retrieved successfully');
+    return ApiResponse.success(slots, 'Lấy khung giờ trống thành công');
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update schedule' })
+  @ApiOperation({ summary: 'Cập nhật lịch làm việc' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Schedule updated successfully',
+    description: 'Cập nhật lịch làm việc thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Schedule not found' })
-  @ApiResponseSwagger({ status: 409, description: 'Schedule overlaps' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy lịch làm việc' })
+  @ApiResponseSwagger({ status: 409, description: 'Lịch làm việc bị trùng' })
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateDoctorScheduleDto,
   ) {
     const schedule = await this.doctorScheduleService.update(id, updateDto);
-    return ApiResponse.success(schedule, 'Schedule updated successfully');
+    return ApiResponse.success(schedule, 'Cập nhật lịch làm việc thành công');
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Delete schedule' })
+  @ApiOperation({ summary: 'Xóa lịch làm việc' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Schedule deleted successfully',
+    description: 'Xóa lịch làm việc thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Schedule not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy lịch làm việc' })
   async remove(@Param('id') id: string) {
     const schedule = await this.doctorScheduleService.remove(id);
-    return ApiResponse.success(schedule, 'Schedule deleted successfully');
+    return ApiResponse.success(schedule, 'Xóa lịch làm việc thành công');
   }
 }

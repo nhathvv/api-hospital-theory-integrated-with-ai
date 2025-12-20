@@ -37,10 +37,10 @@ export class DoctorController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all active doctors for patients' })
+  @ApiOperation({ summary: 'Lấy danh sách bác sĩ đang hoạt động' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Doctors retrieved successfully',
+    description: 'Lấy danh sách bác sĩ thành công',
   })
   async findAll(@Query() query: QueryDoctorDto) {
     query.status = DoctorStatus.ACTIVE;
@@ -49,22 +49,22 @@ export class DoctorController {
       result.data,
       result.total,
       query,
-      'Doctors retrieved successfully',
+      'Lấy danh sách bác sĩ thành công',
     );
   }
 
-  @Get('my-patients')
+  @Get('me/patients')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DOCTOR)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Lấy danh sách bệnh nhân của bác sĩ',
+    summary: 'Lấy danh sách bệnh nhân của tôi',
     description: `
       Lấy danh sách tất cả bệnh nhân đã/đang có lịch hẹn với bác sĩ hiện tại.
       
-      **Filters:**
+      **Bộ lọc:**
       - keyword: Tìm kiếm theo tên, email, số điện thoại bệnh nhân
-      - appointmentStatus: Lọc theo trạng thái lịch hẹn (PENDING, CONFIRMED, COMPLETED, CANCELLED, etc.)
+      - appointmentStatus: Lọc theo trạng thái lịch hẹn (PENDING, CONFIRMED, COMPLETED, CANCELLED, v.v.)
     `,
   })
   @ApiResponseSwagger({
@@ -73,7 +73,7 @@ export class DoctorController {
   })
   @ApiResponseSwagger({
     status: 403,
-    description: 'Không có quyền truy cập (không phải bác sĩ)',
+    description: 'Không có quyền truy cập - không phải bác sĩ',
   })
   async getMyPatients(
     @CurrentUser('doctorId') doctorId: string,
@@ -96,7 +96,7 @@ export class DoctorController {
     );
   }
 
-  @Get('my-patients/:patientId')
+  @Get('me/patients/:patientId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DOCTOR)
   @ApiBearerAuth('JWT-auth')
@@ -114,7 +114,7 @@ export class DoctorController {
   })
   @ApiParam({
     name: 'patientId',
-    description: 'ID của bệnh nhân',
+    description: 'ID bệnh nhân',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @ApiResponseSwagger({
@@ -127,8 +127,7 @@ export class DoctorController {
   })
   @ApiResponseSwagger({
     status: 404,
-    description:
-      'Không tìm thấy bệnh nhân hoặc bệnh nhân không có lịch hẹn với bạn',
+    description: 'Không tìm thấy bệnh nhân hoặc bệnh nhân không có lịch hẹn với bạn',
   })
   async getPatientDetail(
     @CurrentUser('doctorId') doctorId: string,
@@ -146,12 +145,12 @@ export class DoctorController {
     return ApiResponse.success(patient, 'Lấy thông tin bệnh nhân thành công');
   }
 
-  @Patch('appointments/:appointmentId/consultation')
+  @Patch('me/appointments/:appointmentId/consultation')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DOCTOR)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Cập nhật chẩn đoán và kê đơn thuốc',
+    summary: 'Cập nhật chẩn đoán',
     description: `
       Bác sĩ cập nhật chẩn đoán và kê đơn thuốc cho lịch hẹn.
       
@@ -163,45 +162,12 @@ export class DoctorController {
   })
   @ApiParam({
     name: 'appointmentId',
-    description: 'ID của lịch hẹn',
+    description: 'ID lịch hẹn',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @ApiResponseSwagger({
     status: 200,
     description: 'Cập nhật chẩn đoán thành công',
-    schema: {
-      example: {
-        success: true,
-        statusCode: 200,
-        message: 'Cập nhật chẩn đoán thành công',
-        data: {
-          id: '550e8400-e29b-41d4-a716-446655440000',
-          appointmentDate: '2024-12-20',
-          status: 'COMPLETED',
-          symptoms: 'Đau đầu, sốt nhẹ',
-          diagnosis: 'Viêm họng cấp, nhiễm virus đường hô hấp trên',
-          prescription:
-            'Paracetamol 500mg x 2 viên/ngày\nAmoxicillin 500mg x 3 viên/ngày',
-          notes: 'Nghỉ ngơi, uống nhiều nước, tái khám sau 3 ngày',
-          completedAt: '2024-12-20T10:30:00.000Z',
-          patient: {
-            id: '550e8400-e29b-41d4-a716-446655440001',
-            user: {
-              id: '550e8400-e29b-41d4-a716-446655440002',
-              fullName: 'Nguyễn Văn A',
-              email: 'patient@example.com',
-              phone: '0901234567',
-            },
-          },
-          timeSlot: {
-            startTime: '09:00',
-            endTime: '09:30',
-            dayOfWeek: 'FRIDAY',
-          },
-        },
-        timestamp: '2024-12-20T10:30:00.000Z',
-      },
-    },
   })
   @ApiResponseSwagger({
     status: 400,
@@ -233,7 +199,7 @@ export class DoctorController {
     return ApiResponse.success(appointment, 'Cập nhật chẩn đoán thành công');
   }
 
-  @Patch('appointments/:appointmentId/prescription')
+  @Patch('me/appointments/:appointmentId/prescription')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DOCTOR)
   @ApiBearerAuth('JWT-auth')
@@ -255,7 +221,7 @@ export class DoctorController {
   })
   @ApiParam({
     name: 'appointmentId',
-    description: 'ID của lịch hẹn',
+    description: 'ID lịch hẹn',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @ApiResponseSwagger({
@@ -292,7 +258,7 @@ export class DoctorController {
     return ApiResponse.success(result, 'Kê đơn thuốc thành công');
   }
 
-  @Get('appointments/:appointmentId/prescription')
+  @Get('me/appointments/:appointmentId/prescription')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DOCTOR)
   @ApiBearerAuth('JWT-auth')
@@ -302,7 +268,7 @@ export class DoctorController {
   })
   @ApiParam({
     name: 'appointmentId',
-    description: 'ID của lịch hẹn',
+    description: 'ID lịch hẹn',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @ApiResponseSwagger({
@@ -315,14 +281,14 @@ export class DoctorController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get doctor detail by ID' })
+  @ApiOperation({ summary: 'Lấy thông tin chi tiết bác sĩ' })
   @ApiResponseSwagger({
     status: 200,
-    description: 'Doctor retrieved successfully',
+    description: 'Lấy thông tin bác sĩ thành công',
   })
-  @ApiResponseSwagger({ status: 404, description: 'Doctor not found' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy bác sĩ' })
   async findOne(@Param('id') id: string) {
     const doctor = await this.doctorService.findOne(id);
-    return ApiResponse.success(doctor, 'Doctor retrieved successfully');
+    return ApiResponse.success(doctor, 'Lấy thông tin bác sĩ thành công');
   }
 }
