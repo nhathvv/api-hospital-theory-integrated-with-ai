@@ -2,15 +2,26 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma';
-import { CreateDoctorDto, QueryDoctorDto } from './dto';
+import {
+  CreateDoctorDto,
+  QueryDoctorDto,
+  QueryMyPatientsDto,
+  UpdateConsultationDto,
+} from './dto';
 import { UserService } from '../user';
 import { TransactionUtils } from '../common/utils';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/common/constants';
-import { DoctorStatus, Prisma, DayOfWeek } from '@prisma/client';
+import {
+  DoctorStatus,
+  Prisma,
+  DayOfWeek,
+  AppointmentStatus,
+} from '@prisma/client';
 import { EnvService } from '../configs/envs/env-service';
 
 @Injectable()
@@ -225,6 +236,234 @@ export class DoctorService {
     });
   }
 
+  async getMyPatients(doctorId: string, query: QueryMyPatientsDto) {
+    const where: Prisma.AppointmentWhereInput = {
+      doctorId,
+    };
+
+    if (query.appointmentStatus) {
+      where.status = query.appointmentStatus;
+    }
+
+    const appointments = await this.prisma.appointment.findMany({
+      where,
+      select: {
+        patientId: true,
+      },
+      distinct: ['patientId'],
+    });
+
+    const patientIds = appointments.map((a) => a.patientId);
+
+    if (patientIds.length === 0) {
+      return { data: [], total: 0 };
+    }
+
+    const patientWhere: Prisma.PatientWhereInput = {
+      id: { in: patientIds },
+      deletedAt: null,
+    };
+
+    if (query.keyword) {
+      patientWhere.user = {
+        OR: [
+          { fullName: { contains: query.keyword, mode: 'insensitive' } },
+          { email: { contains: query.keyword, mode: 'insensitive' } },
+          { phone: { contains: query.keyword } },
+        ],
+      };
+    }
+
+    const [patients, total] = await Promise.all([
+      this.prisma.patient.findMany({
+        where: patientWhere,
+        ...query.getPrismaParams(),
+        orderBy: query.getPrismaSortParams(),
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              phone: true,
+              fullName: true,
+              avatar: true,
+              address: true,
+            },
+          },
+          appointments: {
+            where: { doctorId },
+            orderBy: { appointmentDate: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              appointmentDate: true,
+              status: true,
+              symptoms: true,
+              diagnosis: true,
+            },
+          },
+        },
+      }),
+      this.prisma.patient.count({ where: patientWhere }),
+    ]);
+
+    const patientsWithStats = patients.map((patient) => ({
+      ...patient,
+      lastAppointment: patient.appointments[0] || null,
+      appointments: undefined,
+    }));
+
+    return { data: patientsWithStats, total };
+  }
+
+  async getPatientDetail(doctorId: string, patientId: string) {
+    const hasAppointment = await this.prisma.appointment.findFirst({
+      where: { doctorId, patientId },
+    });
+
+    if (!hasAppointment) {
+      throw new NotFoundException('Bệnh nhân này không có lịch hẹn với bạn');
+    }
+
+    const patient = await this.prisma.patient.findUnique({
+      where: { id: patientId, deletedAt: null },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            fullName: true,
+            avatar: true,
+            address: true,
+            createdAt: true,
+          },
+        },
+        appointments: {
+          where: { doctorId },
+          orderBy: { appointmentDate: 'desc' },
+          select: {
+            id: true,
+            appointmentDate: true,
+            status: true,
+            examinationType: true,
+            symptoms: true,
+            diagnosis: true,
+            prescription: true,
+            notes: true,
+            completedAt: true,
+            createdAt: true,
+            timeSlot: {
+              select: {
+                startTime: true,
+                endTime: true,
+              },
+            },
+            documents: {
+              select: {
+                id: true,
+                title: true,
+                documentType: true,
+                documentUrl: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!patient) {
+      throw new NotFoundException('Không tìm thấy bệnh nhân');
+    }
+
+    return patient;
+  }
+
+  async updateConsultation(
+    doctorId: string,
+    appointmentId: string,
+    dto: UpdateConsultationDto,
+  ) {
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        patient: {
+          include: {
+            user: {
+              select: { fullName: true },
+            },
+          },
+        },
+        timeSlot: {
+          select: { startTime: true, endTime: true },
+        },
+      },
+    });
+    if (!appointment) {
+      throw new NotFoundException('Không tìm thấy lịch hẹn');
+    }
+    if (appointment.doctorId !== doctorId) {
+      throw new BadRequestException('Lịch hẹn này không thuộc về bạn');
+    }
+    const validStatuses: AppointmentStatus[] = [
+      AppointmentStatus.CONFIRMED,
+      AppointmentStatus.IN_PROGRESS,
+    ];
+    if (!validStatuses.includes(appointment.status)) {
+      throw new BadRequestException(
+        `Không thể cập nhật chẩn đoán cho lịch hẹn có trạng thái "${appointment.status}"`,
+      );
+    }
+    const payload: Prisma.AppointmentUpdateInput = {
+      diagnosis: dto.diagnosis,
+      prescription: dto.prescription,
+      notes: dto.notes ?? appointment.notes,
+    };
+    if (dto.status === AppointmentStatus.COMPLETED) {
+      payload.status = AppointmentStatus.COMPLETED;
+      payload.completedAt = new Date();
+    } else if (dto.status === AppointmentStatus.IN_PROGRESS) {
+      payload.status = AppointmentStatus.IN_PROGRESS;
+    }
+    const result = await this.prisma.appointment.update({
+      where: { id: appointmentId },
+      data: payload,
+      include: {
+        patient: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
+        timeSlot: {
+          select: {
+            startTime: true,
+            endTime: true,
+            dayOfWeek: true,
+          },
+        },
+        documents: {
+          select: {
+            id: true,
+            title: true,
+            documentType: true,
+            documentUrl: true,
+          },
+        },
+      },
+    });
+    this.logger.log(
+      `Doctor ${doctorId} updated consultation for appointment ${appointmentId}`,
+    );
+    return result;
+  }
   private buildFilterQuery(query: QueryDoctorDto): Prisma.DoctorWhereInput {
     const where: Prisma.DoctorWhereInput = {
       deletedAt: null,
