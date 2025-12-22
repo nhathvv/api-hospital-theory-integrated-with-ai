@@ -26,8 +26,8 @@ export class PatientService {
   }
 
   async getProfileByUserId(userId: string) {
-    return this.prisma.patient.findUnique({
-      where: { userId },
+    return this.prisma.patient.findFirst({
+      where: { userId, deletedAt: null },
       select: {
         id: true,
         height: true,
@@ -42,6 +42,29 @@ export class PatientService {
         chronicDisease: true,
       },
     });
+  }
+
+  async getOrCreatePatientByUserId(userId: string) {
+    let patient = await this.prisma.patient.findFirst({
+      where: { userId, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!patient) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, role: true },
+      });
+
+      if (user && user.role === 'PATIENT') {
+        patient = await this.prisma.patient.create({
+          data: { userId },
+          select: { id: true },
+        });
+      }
+    }
+
+    return patient;
   }
 
   async updateMyProfile(userId: string, updatePatientDto: UpdatePatientDto) {

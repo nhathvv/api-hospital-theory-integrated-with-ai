@@ -181,8 +181,8 @@ model DoctorTimeSlot {
 }
 
 model Patient {
-  id                    String        @id @default(uuid())
-  userId                String        @unique
+  id                    String         @id @default(uuid())
+  userId                String         @unique
   height                Float?
   weight                Float?
   bloodType             String?
@@ -191,13 +191,14 @@ model Patient {
   gender                Gender?
   healthInsuranceNumber String?
   emergencyContact      String?
-  identityNumber        String?   // Số CMND/CCCD
-  chronicDisease        String?   // Bệnh mãn tính
+  identityNumber        String?
+  chronicDisease        String?
   deletedAt             DateTime?
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
   appointments          Appointment[]
-  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations         Conversation[]
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([deletedAt])
@@ -451,4 +452,69 @@ enum BatchStatus {
   OUT_OF_STOCK // Hết hàng
   EXPIRED // Hết hạn
   DISPOSED // Đã tiêu hủy
+}
+
+model Conversation {
+  id              String               @id @default(uuid())
+  patientId       String
+  subject         String?
+  status          ConversationStatus   @default(OPEN)
+  priority        ConversationPriority @default(NORMAL)
+  assignedAdminId String?
+  lastMessageAt   DateTime?
+  closedAt        DateTime?
+  closedById      String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  patient         Patient              @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  messages        Message[]
+
+  @@index([patientId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedAdminId])
+  @@index([lastMessageAt])
+  @@index([createdAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String
+  senderRole     UserRole
+  content        String       @db.Text
+  messageType    MessageType  @default(TEXT)
+  attachmentUrl  String?
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+enum ConversationStatus {
+  OPEN
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum ConversationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
 }

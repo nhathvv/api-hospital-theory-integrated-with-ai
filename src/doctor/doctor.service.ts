@@ -224,6 +224,9 @@ export class DoctorService {
         consultationFee: true,
         bio: true,
         status: true,
+        educations: true,
+        certifications: true,
+        awards: true,
       },
     });
   }

@@ -16,6 +16,7 @@ import { MedicineBatchModule } from './medicine-batch';
 import { AdminModule } from './admin';
 import { AppointmentModule } from './appointment';
 import { PaymentModule } from './payment/payment.module';
+import { ConversationModule } from './conversation';
 import { EnvService } from './configs/envs/env-service';
 import { BullModule } from '@nestjs/bullmq';
 
@@ -50,6 +51,7 @@ const envService = EnvService.getInstance();
     AdminModule,
     AppointmentModule,
     PaymentModule,
+    ConversationModule,
   ],
   controllers: [AppController],
   providers: [
