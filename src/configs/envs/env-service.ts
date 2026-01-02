@@ -87,4 +87,16 @@ export class EnvService {
   getRedisPassword(): string {
     return process.env.REDIS_PASSWORD || '';
   }
+  getGeminiApiKey(): string {
+    return process.env.GEMINI_API_KEY || '';
+  }
+  getGeminiModel(): string {
+    return process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
+  }
+  getGeminiMaxTokens(): number {
+    return Number(process.env.GEMINI_MAX_TOKENS) || 2048;
+  }
+  getGeminiTemperature(): number {
+    return Number(process.env.GEMINI_TEMPERATURE) || 0.7;
+  }
 }
