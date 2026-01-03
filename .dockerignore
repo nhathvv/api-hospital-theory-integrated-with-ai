@@ -5,6 +5,9 @@ npm-debug.log
 # Build output
 dist
 
+# Blockchain (separate project)
+blockchain
+
 # IDE and editor
 .idea
 .vscode
@@ -34,6 +37,7 @@ test
 # Documentation
 README.md
 *.md
+backend-development
 
 # Logs
 logs

@@ -30,7 +30,16 @@ export class BlockchainService implements OnModuleInit {
     }
 
     try {
-      this.provider = new ethers.JsonRpcProvider(rpcUrl);
+      this.provider = new ethers.JsonRpcProvider(rpcUrl, undefined, {
+        staticNetwork: true,
+      });
+
+      this.provider.on('error', (error) => {
+        this.logger.warn('Blockchain provider error (non-fatal):', error.message);
+      });
+
+      const network = await this.provider.getNetwork();
+      
       this.wallet = new ethers.Wallet(privateKey, this.provider);
       this.paymentContract = new ethers.Contract(
         contractAddress,
@@ -39,13 +48,25 @@ export class BlockchainService implements OnModuleInit {
       );
       this.isEnabled = true;
 
-      const network = await this.provider.getNetwork();
       this.logger.log(
         `Blockchain connected: Network=${network.name}, ChainId=${network.chainId}`,
       );
     } catch (error) {
-      this.logger.error('Failed to initialize blockchain connection', error);
+      this.logger.error('Failed to initialize blockchain connection');
+      this.logger.error(error instanceof Error ? error.message : String(error));
+      this.cleanup();
     }
+  }
+
+  private cleanup() {
+    if (this.provider) {
+      this.provider.removeAllListeners();
+      this.provider.destroy();
+      this.provider = null;
+    }
+    this.wallet = null;
+    this.paymentContract = null;
+    this.isEnabled = false;
   }
 
   isBlockchainEnabled(): boolean {
