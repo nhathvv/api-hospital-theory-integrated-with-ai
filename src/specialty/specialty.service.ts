@@ -9,7 +9,9 @@ import {
   CreateSpecialtyDto,
   UpdateSpecialtyDto,
   QuerySpecialtyDto,
+  QuerySpecialtyDoctorsDto,
 } from './dto';
+import { DoctorStatus } from '@prisma/client';
 
 @Injectable()
 export class SpecialtyService {
@@ -59,6 +61,50 @@ export class SpecialtyService {
     }
 
     return specialty;
+  }
+
+  async findDoctorsBySpecialty(specialtyId: string, query: QuerySpecialtyDoctorsDto) {
+    await this.findOne(specialtyId);
+
+    const where: any = {
+      primarySpecialtyId: specialtyId,
+      status: DoctorStatus.ACTIVE,
+      deletedAt: null,
+    };
+
+    if (query.name) {
+      where.user = {
+        fullName: { contains: query.name, mode: 'insensitive' },
+      };
+    }
+
+    const [doctors, total] = await Promise.all([
+      this.prisma.doctor.findMany({
+        where,
+        ...query.getPrismaParams(),
+        orderBy: query.getPrismaSortParams(),
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              phone: true,
+              avatar: true,
+            },
+          },
+          primarySpecialty: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      }),
+      this.prisma.doctor.count({ where }),
+    ]);
+
+    return { data: doctors, total };
   }
 
   async update(id: string, updateSpecialtyDto: UpdateSpecialtyDto) {

@@ -5,7 +5,7 @@ import {
   ApiResponse as ApiResponseSwagger,
 } from '@nestjs/swagger';
 import { SpecialtyService } from './specialty.service';
-import { QuerySpecialtyDto } from './dto';
+import { QuerySpecialtyDto, QuerySpecialtyDoctorsDto } from './dto';
 import { ApiResponse, PaginatedResponse } from '../common/dto';
 
 @ApiTags('Public - Specialties')
@@ -40,5 +40,25 @@ export class SpecialtyController {
   async findOne(@Param('id') id: string) {
     const specialty = await this.specialtyService.findOne(id);
     return ApiResponse.success(specialty, 'Lấy thông tin chuyên khoa thành công');
+  }
+
+  @Get(':id/doctors')
+  @ApiOperation({ summary: 'Lấy danh sách bác sỹ của chuyên khoa' })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Lấy danh sách bác sỹ thành công',
+  })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy chuyên khoa' })
+  async findDoctorsBySpecialty(
+    @Param('id') id: string,
+    @Query() query: QuerySpecialtyDoctorsDto,
+  ) {
+    const result = await this.specialtyService.findDoctorsBySpecialty(id, query);
+    return PaginatedResponse.create(
+      result.data,
+      result.total,
+      query,
+      'Lấy danh sách bác sỹ thành công',
+    );
   }
 }
