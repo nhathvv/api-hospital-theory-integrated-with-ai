@@ -7,12 +7,16 @@ import {
 import { PaymentRepository } from './repository/payment.repository';
 import { PaymentStatus, TransferType } from './enum';
 import { ExceptionUtils, CodeGeneratorUtils } from '../common/utils';
+import { PaymentBlockchainService } from '../blockchain';
 
 @Injectable()
 export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
 
-  constructor(private readonly paymentRepository: PaymentRepository) {}
+  constructor(
+    private readonly paymentRepository: PaymentRepository,
+    private readonly paymentBlockchainService: PaymentBlockchainService,
+  ) {}
 
   async findAll(query: QueryPaymentDto) {
     return this.paymentRepository.findAll(query);
@@ -64,11 +68,29 @@ export class PaymentService {
       PaymentStatus.SUCCESS,
     );
     this.logger.log(`Payment ${paymentCode} processed successfully`);
+
+    this.recordOnBlockchainAsync(payment.id);
+
     return {
       success: true,
       message: 'Payment received successfully',
       data: { paymentCode },
     };
+  }
+
+  private recordOnBlockchainAsync(paymentId: string) {
+    this.paymentBlockchainService
+      .recordPaymentOnBlockchain(paymentId)
+      .then((result) => {
+        this.logger.log(
+          `Payment ${paymentId} recorded on blockchain: txHash=${result.txHash}`,
+        );
+      })
+      .catch((error) => {
+        this.logger.warn(
+          `Failed to record payment ${paymentId} on blockchain: ${error.message}`,
+        );
+      });
   }
 
   private extractPaymentCode(data: WebhookPaymentBodyDto): string {

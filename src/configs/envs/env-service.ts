@@ -99,4 +99,19 @@ export class EnvService {
   getGeminiTemperature(): number {
     return Number(process.env.GEMINI_TEMPERATURE) || 0.7;
   }
+  getPolygonRpcUrl(): string {
+    return process.env.POLYGON_RPC_URL || '';
+  }
+  getPolygonTestnetRpcUrl(): string {
+    return process.env.POLYGON_TESTNET_RPC_URL || '';
+  }
+  getBlockchainPrivateKey(): string {
+    return process.env.BLOCKCHAIN_PRIVATE_KEY || '';
+  }
+  getPaymentRegistryContract(): string {
+    return process.env.PAYMENT_REGISTRY_CONTRACT || '';
+  }
+  getPolygonscanApiKey(): string {
+    return process.env.POLYGONSCAN_API_KEY || '';
+  }
 }

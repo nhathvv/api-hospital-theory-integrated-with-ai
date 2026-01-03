@@ -346,17 +346,20 @@ model PrescriptionItem {
 }
 
 model Payment {
-  id            String        @id @default(uuid())
-  paymentCode   String        @unique
-  appointmentId String        @unique
-  appointment   Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
-  method        PaymentMethod
-  status        PaymentStatus @default(PENDING)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id               String        @id @default(uuid())
+  paymentCode      String        @unique
+  appointmentId    String        @unique
+  appointment      Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  method           PaymentMethod
+  status           PaymentStatus @default(PENDING)
+  dataHash         String?
+  blockchainTxHash String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   @@index([appointmentId])
   @@index([paymentCode])
+  @@index([blockchainTxHash])
   @@map("payments")
 }
 model PaymentTransaction {
@@ -374,6 +377,36 @@ model PaymentTransaction {
   body               String?  @db.Text // Dữ liệu gốc từ webhook
   createdAt DateTime @default(now())
 }
+model BlockchainTransaction {
+  id          String              @id @default(uuid())
+  txHash      String              @unique
+  dataHash    String
+  recordType  BlockchainRecordType
+  recordId    String
+  blockNumber Int?
+  gasUsed     String?
+  status      BlockchainTxStatus  @default(PENDING)
+  createdAt   DateTime            @default(now())
+  confirmedAt DateTime?
+
+  @@index([recordType, recordId])
+  @@index([txHash])
+  @@map("blockchain_transactions")
+}
+
+enum BlockchainRecordType {
+  PAYMENT
+  MEDICAL_RECORD
+  PRESCRIPTION
+  CREDENTIAL
+}
+
+enum BlockchainTxStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
 enum PaymentMethod {
   CASH
   BANK_TRANSFER
