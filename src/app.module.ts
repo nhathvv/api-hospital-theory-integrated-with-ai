@@ -19,6 +19,7 @@ import { PaymentModule } from './payment/payment.module';
 import { ConversationModule } from './conversation';
 import { AIRecommendationModule } from './ai-recommendation';
 import { BlockchainModule } from './blockchain';
+import { UploadModule } from './upload';
 import { EnvService } from './configs/envs/env-service';
 import { BullModule } from '@nestjs/bullmq';
 
@@ -56,6 +57,7 @@ const envService = EnvService.getInstance();
     ConversationModule,
     AIRecommendationModule,
     BlockchainModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [

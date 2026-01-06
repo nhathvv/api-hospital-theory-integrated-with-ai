@@ -34,6 +34,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ReentrancyGuard__factory>;
     getContractFactory(
+      name: "HospitalMedicalRecordRegistry",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.HospitalMedicalRecordRegistry__factory>;
+    getContractFactory(
       name: "HospitalPaymentRegistry",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.HospitalPaymentRegistry__factory>;
@@ -64,6 +68,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ReentrancyGuard>;
     getContractAt(
+      name: "HospitalMedicalRecordRegistry",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.HospitalMedicalRecordRegistry>;
+    getContractAt(
       name: "HospitalPaymentRegistry",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -90,6 +99,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
+      name: "HospitalMedicalRecordRegistry",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.HospitalMedicalRecordRegistry>;
+    deployContract(
       name: "HospitalPaymentRegistry",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.HospitalPaymentRegistry>;
@@ -119,6 +132,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
+    deployContract(
+      name: "HospitalMedicalRecordRegistry",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.HospitalMedicalRecordRegistry>;
     deployContract(
       name: "HospitalPaymentRegistry",
       args: any[],

@@ -16,5 +16,7 @@ export type { IERC165 } from "./@openzeppelin/contracts/utils/introspection/IERC
 export { IERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/IERC165__factory";
 export type { ReentrancyGuard } from "./@openzeppelin/contracts/utils/ReentrancyGuard";
 export { ReentrancyGuard__factory } from "./factories/@openzeppelin/contracts/utils/ReentrancyGuard__factory";
+export type { HospitalMedicalRecordRegistry } from "./contracts/HospitalMedicalRecordRegistry";
+export { HospitalMedicalRecordRegistry__factory } from "./factories/contracts/HospitalMedicalRecordRegistry__factory";
 export type { HospitalPaymentRegistry } from "./contracts/HospitalPaymentRegistry";
 export { HospitalPaymentRegistry__factory } from "./factories/contracts/HospitalPaymentRegistry__factory";

@@ -261,6 +261,45 @@
       "artifacts": [
         "IERC165"
       ]
+    },
+    "/Users/nhathv/Desktop/Dev/api-hospital-theory-integrated-with-ai/blockchain/contracts/HospitalMedicalRecordRegistry.sol": {
+      "lastModificationDate": 1767516045656,
+      "contentHash": "6e4e1d25c3dd39250eedb9791b640b7a",
+      "sourceName": "contracts/HospitalMedicalRecordRegistry.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/access/AccessControl.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "HospitalMedicalRecordRegistry"
+      ]
     }
   }
 }

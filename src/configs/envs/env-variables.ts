@@ -40,5 +40,21 @@ class EnvironmentVariables {
   @IsNumber()
   @IsOptional()
   THROTTLE_LIMIT: number;
+
+  @IsString()
+  @IsOptional()
+  CLOUDINARY_CLOUD_NAME: string;
+
+  @IsString()
+  @IsOptional()
+  CLOUDINARY_API_KEY: string;
+
+  @IsString()
+  @IsOptional()
+  CLOUDINARY_API_SECRET: string;
+
+  @IsString()
+  @IsOptional()
+  MEDICAL_RECORD_REGISTRY_CONTRACT: string;
 }
 export default EnvironmentVariables;

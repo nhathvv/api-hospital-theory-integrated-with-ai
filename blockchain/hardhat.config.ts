@@ -41,11 +41,22 @@ const config: HardhatUserConfig = {
       url: MUMBAI_RPC_URL || 'https://rpc-amoy.polygon.technology',
       accounts: getAccounts(),
       chainId: 80002,
+      gasPrice: 25000000000,
     },
     polygon: {
       url: POLYGON_RPC_URL || 'https://polygon-rpc.com',
       accounts: getAccounts(),
       chainId: 137,
+    },
+    sepolia: {
+      url: 'https://rpc.sepolia.org',
+      accounts: getAccounts(),
+      chainId: 11155111,
+    },
+    baseSepolia: {
+      url: 'https://sepolia.base.org',
+      accounts: getAccounts(),
+      chainId: 84532,
     },
   },
   etherscan: {

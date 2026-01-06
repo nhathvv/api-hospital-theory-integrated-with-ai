@@ -40,3 +40,39 @@ export interface BlockchainConfig {
   contractAddress: string;
 }
 
+export interface MedicalRecordHashData {
+  documentId: string;
+  appointmentId: string;
+  title: string;
+  documentType: string;
+  documentUrl: string;
+  uploadedById: string;
+  createdAt: string;
+  fileContentHash: string;
+}
+
+export interface RecordMedicalDocumentResult {
+  txHash: string;
+  dataHash: string;
+  blockNumber?: number;
+}
+
+export interface VerifyMedicalRecordResult {
+  isValid: boolean;
+  isRevoked: boolean;
+  recordType: MedicalRecordBlockchainType;
+  timestamp: number;
+  message: string;
+}
+
+export enum MedicalRecordBlockchainType {
+  LAB_RESULT = 0,
+  X_RAY = 1,
+  MRI = 2,
+  CT_SCAN = 3,
+  ULTRASOUND = 4,
+  PRESCRIPTION = 5,
+  MEDICAL_REPORT = 6,
+  OTHER = 7,
+}
+

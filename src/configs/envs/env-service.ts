@@ -114,4 +114,16 @@ export class EnvService {
   getPolygonscanApiKey(): string {
     return process.env.POLYGONSCAN_API_KEY || '';
   }
+  getCloudinaryCloudName(): string {
+    return process.env.CLOUDINARY_CLOUD_NAME || '';
+  }
+  getCloudinaryApiKey(): string {
+    return process.env.CLOUDINARY_API_KEY || '';
+  }
+  getCloudinaryApiSecret(): string {
+    return process.env.CLOUDINARY_API_SECRET || '';
+  }
+  getMedicalRecordRegistryContract(): string {
+    return process.env.MEDICAL_RECORD_REGISTRY_CONTRACT || '';
+  }
 }
