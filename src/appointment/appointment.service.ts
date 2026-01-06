@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma';
 import {
   CreateAppointmentDto,
   QueryAppointmentDto,
+  QueryMyAppointmentDto,
   CancelAppointmentDto,
 } from './dto';
 import {
@@ -126,6 +127,56 @@ export class AppointmentService {
         },
       };
     }
+
+    if (startDate || endDate) {
+      where.appointmentDate = {};
+      if (startDate) {
+        where.appointmentDate.gte = new Date(startDate);
+      }
+      if (endDate) {
+        where.appointmentDate.lte = new Date(endDate);
+      }
+    }
+
+    if (doctorId) {
+      where.doctorId = doctorId;
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    const [appointments, totalItems] = await Promise.all([
+      this.prisma.appointment.findMany({
+        where,
+        include: {
+          ...this.getAppointmentIncludes(),
+          payment: {
+            select: {
+              id: true,
+              paymentCode: true,
+              method: true,
+              status: true,
+            },
+          },
+        },
+        orderBy: query.getPrismaSortParams(),
+        ...query.getPrismaParams(),
+      }),
+      this.prisma.appointment.count({ where }),
+    ]);
+
+    const data = appointments.map((appointment) =>
+      this.formatAppointmentResponse(appointment, appointment.payment),
+    );
+
+    return { data, totalItems };
+  }
+
+  async findByPatientId(patientId: string, query: QueryMyAppointmentDto) {
+    const { startDate, endDate, doctorId, status } = query;
+
+    const where: any = { patientId };
 
     if (startDate || endDate) {
       where.appointmentDate = {};

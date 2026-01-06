@@ -22,6 +22,7 @@ import { UserRole } from '../common/constants';
 import { ApiResponse, PaginatedResponse } from '../common/dto';
 import { ExceptionUtils } from '../common/utils';
 import { PaymentService, QueryMyPaymentDto } from '../payment';
+import { AppointmentService, QueryMyAppointmentDto } from '../appointment';
 
 @ApiTags('Patient')
 @ApiBearerAuth('JWT-auth')
@@ -32,6 +33,7 @@ export class PatientController {
   constructor(
     private readonly patientService: PatientService,
     private readonly paymentService: PaymentService,
+    private readonly appointmentService: AppointmentService,
   ) {}
 
   @Patch('me')
@@ -55,6 +57,43 @@ export class PatientController {
       updatePatientDto,
     );
     return ApiResponse.success(patient, 'Cập nhật hồ sơ thành công');
+  }
+
+  @Get('me/appointments')
+  @ApiOperation({
+    summary: 'Lấy danh sách lịch hẹn của tôi',
+    description: `
+      Lấy danh sách lịch hẹn của bệnh nhân hiện tại.
+      
+      **Bộ lọc:**
+      - Theo khoảng thời gian (startDate, endDate)
+      - Theo bác sĩ (doctorId)
+      - Theo trạng thái (status)
+    `,
+  })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Lấy danh sách lịch hẹn thành công',
+  })
+  @ApiResponseSwagger({ status: 401, description: 'Chưa xác thực' })
+  async findMyAppointments(
+    @CurrentUser('sub') userId: string,
+    @Query() query: QueryMyAppointmentDto,
+  ) {
+    const patient = await this.patientService.getProfileByUserId(userId);
+    if (!patient) {
+      ExceptionUtils.throwNotFound('Không tìm thấy hồ sơ bệnh nhân');
+    }
+    const result = await this.appointmentService.findByPatientId(
+      patient.id,
+      query,
+    );
+    return PaginatedResponse.create(
+      result.data,
+      result.totalItems,
+      query,
+      'Lấy danh sách lịch hẹn thành công',
+    );
   }
 
   @Get('me/payments')
