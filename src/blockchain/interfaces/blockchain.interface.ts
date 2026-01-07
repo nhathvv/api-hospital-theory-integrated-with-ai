@@ -73,6 +73,7 @@ export enum MedicalRecordBlockchainType {
   ULTRASOUND = 4,
   PRESCRIPTION = 5,
   MEDICAL_REPORT = 6,
-  OTHER = 7,
+  MEDICAL_CASE = 7,
+  OTHER = 8,
 }
 

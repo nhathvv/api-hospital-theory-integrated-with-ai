@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { Readable } from 'stream';
+import * as crypto from 'crypto';
 
 export enum UploadFolder {
   AVATARS = 'hospital/avatars',
@@ -16,6 +17,7 @@ export interface UploadResult {
   width?: number;
   height?: number;
   bytes: number;
+  fileContentHash: string;
 }
 
 @Injectable()
@@ -102,6 +104,11 @@ export class CloudinaryService {
     folder: string,
     resourceType: 'image' | 'auto' | 'raw',
   ): Promise<UploadResult> {
+    const fileContentHash = crypto
+      .createHash('sha256')
+      .update(file.buffer)
+      .digest('hex');
+
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
@@ -123,6 +130,7 @@ export class CloudinaryService {
               width: result.width,
               height: result.height,
               bytes: result.bytes,
+              fileContentHash,
             });
           }
         },

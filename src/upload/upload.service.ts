@@ -11,6 +11,7 @@ interface CreateDocumentData {
   documentType: DocumentType;
   documentUrl: string;
   notes?: string;
+  fileContentHash?: string;
 }
 
 @Injectable()
@@ -40,6 +41,7 @@ export class UploadService {
         documentType: data.documentType,
         documentUrl: data.documentUrl,
         notes: data.notes,
+        fileContentHash: data.fileContentHash,
       },
     });
   }
@@ -60,6 +62,7 @@ export class UploadService {
           documentType: doc.documentType,
           documentUrl: doc.documentUrl,
           notes: doc.notes,
+          fileContentHash: doc.fileContentHash,
         },
       }),
     );

@@ -1,0 +1,13 @@
+npm run deploy:amoy
+console.log("Done! Try deploy again.");
+await tx.wait();
+});
+  gasPrice: ethers.parseUnits("50", "gwei")
+  nonce: nonce,
+  value: 0,
+  to: signer.address,
+const tx = await signer.sendTransaction({
+// Gửi transaction trống với gas cao hơn để cancel pending tx
+console.log("Current nonce:", nonce);
+const nonce = await signer.getNonce();
+const [signer] = await ethers.getSigners();

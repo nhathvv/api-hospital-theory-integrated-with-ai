@@ -31,11 +31,28 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
   private async initialize() {
     const envService = EnvService.getInstance();
     const contractAddress = envService.getMedicalRecordRegistryContract();
-    const wallet = this.blockchainService.getWallet();
 
-    if (!contractAddress || !wallet) {
+    if (!contractAddress) {
       this.logger.warn(
-        'Medical Record Registry contract not configured. Medical record blockchain features will be disabled.',
+        'MEDICAL_RECORD_REGISTRY_CONTRACT not configured. Medical record blockchain features will be disabled.',
+      );
+      return;
+    }
+
+    let wallet = this.blockchainService.getWallet();
+    let retries = 0;
+    const maxRetries = 10;
+
+    while (!wallet && retries < maxRetries) {
+      this.logger.log(`Waiting for BlockchainService to initialize... (${retries + 1}/${maxRetries})`);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      wallet = this.blockchainService.getWallet();
+      retries++;
+    }
+
+    if (!wallet) {
+      this.logger.warn(
+        'BlockchainService wallet not available. Medical record blockchain features will be disabled.',
       );
       return;
     }
@@ -96,8 +113,9 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
       };
     }
 
-    const fileContentHash = await this.hashFileContent(document.documentUrl);
-    this.logger.log(`File content hash for ${documentId}: ${fileContentHash}`);
+    const fileContentHash = document.fileContentHash 
+      ?? await this.hashFileContent(document.documentUrl);
+    this.logger.log(`File content hash for ${documentId}: ${fileContentHash} (from ${document.fileContentHash ? 'DB' : 'fetch'})`);
 
     const hashData: MedicalRecordHashData = {
       documentId: document.id,
@@ -141,6 +159,10 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
         appointmentIdBytes,
         dataHashBytes,
         recordType,
+        {
+          gasLimit: 300000,
+          gasPrice: ethers.parseUnits('35', 'gwei'),
+        },
       );
 
       const receipt = await tx.wait();
@@ -221,7 +243,8 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
       };
     }
 
-    const fileContentHash = await this.hashFileContent(document.documentUrl);
+    const fileContentHash = document.fileContentHash 
+      ?? await this.hashFileContent(document.documentUrl);
 
     const hashData: MedicalRecordHashData = {
       documentId: document.id,
@@ -296,6 +319,7 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
         title: true,
         documentType: true,
         documentUrl: true,
+        fileContentHash: true,
         createdAt: true,
       },
     });
@@ -313,7 +337,8 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
     });
 
     const verification = await this.verifyDocument(documentId);
-    const currentFileHash = await this.hashFileContent(document.documentUrl);
+    const currentFileHash = document.fileContentHash 
+      ?? await this.hashFileContent(document.documentUrl);
 
     return {
       document: {
@@ -332,7 +357,7 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
       },
       fileIntegrity: {
         currentFileHash,
-        note: 'Hash của nội dung file hiện tại. Nếu file bị thay đổi, hash này sẽ khác với hash đã lưu trên blockchain.',
+        hashSource: document.fileContentHash ? 'database' : 'fetched',
       },
       verification,
     };
@@ -365,6 +390,7 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
       ULTRASOUND: MedicalRecordBlockchainType.ULTRASOUND,
       PRESCRIPTION: MedicalRecordBlockchainType.PRESCRIPTION,
       MEDICAL_REPORT: MedicalRecordBlockchainType.MEDICAL_REPORT,
+      MEDICAL_CASE: MedicalRecordBlockchainType.MEDICAL_CASE,
     };
     return mapping[documentType] ?? MedicalRecordBlockchainType.OTHER;
   }

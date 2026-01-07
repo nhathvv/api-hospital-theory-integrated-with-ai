@@ -16,6 +16,7 @@ contract HospitalMedicalRecordRegistry is AccessControl, ReentrancyGuard {
         ULTRASOUND,
         PRESCRIPTION,
         MEDICAL_REPORT,
+        MEDICAL_CASE,
         OTHER
     }
 

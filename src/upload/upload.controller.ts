@@ -9,6 +9,7 @@ import {
   Body,
   Param,
   Delete,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -34,6 +35,8 @@ import { MedicalRecordBlockchainService } from '../blockchain';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('upload')
 export class UploadController {
+  private readonly logger = new Logger(UploadController.name);
+
   constructor(
     private readonly cloudinaryService: CloudinaryService,
     private readonly uploadService: UploadService,
@@ -71,7 +74,11 @@ export class UploadController {
   @Roles(UserRole.PATIENT, UserRole.DOCTOR, UserRole.ADMIN)
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload tài liệu y tế cho lịch hẹn' })
+  @ApiOperation({
+    summary: 'Upload tài liệu y tế cho lịch hẹn',
+    description:
+      'Nếu documentType là MEDICAL_CASE (bệnh án), tài liệu sẽ tự động được ghi lên blockchain',
+  })
   @ApiParam({ name: 'appointmentId', description: 'ID lịch hẹn' })
   @ApiBody({
     schema: {
@@ -79,11 +86,11 @@ export class UploadController {
       required: ['file', 'title', 'documentType'],
       properties: {
         file: { type: 'string', format: 'binary' },
-        title: { type: 'string', example: 'Kết quả xét nghiệm máu' },
+        title: { type: 'string', example: 'Bệnh án bệnh nhân' },
         documentType: {
           type: 'string',
           enum: Object.values(DocumentType),
-          example: DocumentType.LAB_RESULT,
+          example: DocumentType.MEDICAL_CASE,
         },
         notes: { type: 'string', example: 'Ghi chú' },
       },
@@ -113,10 +120,34 @@ export class UploadController {
         documentType,
         documentUrl: uploadResult.url,
         notes,
+        fileContentHash: uploadResult.fileContentHash,
       },
     );
 
-    return ApiResponse.success(document, 'Upload tài liệu y tế thành công');
+    let blockchainResult: { txHash: string; dataHash: string; blockNumber?: number } | null = null;
+
+    if (documentType === DocumentType.MEDICAL_CASE) {
+      try {
+        blockchainResult =
+          await this.medicalRecordBlockchainService.recordDocumentOnBlockchain(
+            document.id,
+          );
+        this.logger.log(
+          `Medical case ${document.id} recorded on blockchain: ${blockchainResult?.txHash}`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Auto blockchain recording failed for ${document.id}: ${error.message}`,
+        );
+      }
+    }
+
+    return ApiResponse.success(
+      { document, blockchain: blockchainResult },
+      blockchainResult
+        ? 'Upload bệnh án và ghi blockchain thành công'
+        : 'Upload tài liệu y tế thành công',
+    );
   }
 
   @Post('medical-documents/:appointmentId')
@@ -166,6 +197,7 @@ export class UploadController {
         documentType,
         documentUrl: result.url,
         notes,
+        fileContentHash: result.fileContentHash,
       })),
     );
 
