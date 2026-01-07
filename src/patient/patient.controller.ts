@@ -23,6 +23,7 @@ import { ApiResponse, PaginatedResponse } from '../common/dto';
 import { ExceptionUtils } from '../common/utils';
 import { PaymentService, QueryMyPaymentDto } from '../payment';
 import { AppointmentService, QueryMyAppointmentDto } from '../appointment';
+import { UploadService } from '../upload/upload.service';
 
 @ApiTags('Patient')
 @ApiBearerAuth('JWT-auth')
@@ -34,6 +35,7 @@ export class PatientController {
     private readonly patientService: PatientService,
     private readonly paymentService: PaymentService,
     private readonly appointmentService: AppointmentService,
+    private readonly uploadService: UploadService,
   ) {}
 
   @Patch('me')
@@ -222,5 +224,24 @@ export class PatientController {
       id,
     );
     return ApiResponse.success(consultation, 'Lấy chi tiết lần khám thành công');
+  }
+
+  @Get('me/documents')
+  @ApiOperation({ summary: 'Lấy danh sách tài liệu y tế của tôi' })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Lấy danh sách tài liệu thành công',
+  })
+  @ApiResponseSwagger({ status: 401, description: 'Chưa xác thực' })
+  async getMyDocuments(@CurrentUser('sub') userId: string) {
+    const patient = await this.patientService.getProfileByUserId(userId);
+    if (!patient) {
+      ExceptionUtils.throwNotFound('Không tìm thấy hồ sơ bệnh nhân');
+    }
+    const documents = await this.uploadService.getPatientDocuments(
+      patient.id,
+      userId,
+    );
+    return ApiResponse.success(documents, 'Lấy danh sách tài liệu thành công');
   }
 }

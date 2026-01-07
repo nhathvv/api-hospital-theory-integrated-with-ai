@@ -70,6 +70,133 @@ export class UploadService {
     return Promise.all(createPromises);
   }
 
+  async getDoctorDocuments(doctorId: string, userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { id: doctorId },
+      select: { userId: true },
+    });
+
+    if (!doctor) {
+      throw new NotFoundException('Doctor not found');
+    }
+
+    const isDoctor = doctor.userId === userId;
+    const isAdmin = user?.role === 'ADMIN';
+
+    if (!isDoctor && !isAdmin) {
+      throw new ForbiddenException('Not authorized to view doctor documents');
+    }
+
+    const documents = await this.prisma.appointmentDocument.findMany({
+      where: {
+        appointment: {
+          doctorId,
+        },
+      },
+      include: {
+        appointment: {
+          select: {
+            id: true,
+            appointmentDate: true,
+            patient: {
+              select: {
+                user: {
+                  select: {
+                    fullName: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return documents.map((doc) => ({
+      id: doc.id,
+      title: doc.title,
+      documentType: doc.documentType,
+      documentUrl: doc.documentUrl,
+      notes: doc.notes,
+      createdAt: doc.createdAt,
+      appointmentId: doc.appointmentId,
+      appointmentDate: doc.appointment.appointmentDate,
+      patientName: doc.appointment.patient.user.fullName,
+    }));
+  }
+
+  async getPatientDocuments(patientId: string, userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    const patient = await this.prisma.patient.findUnique({
+      where: { id: patientId },
+      select: { userId: true },
+    });
+
+    if (!patient) {
+      throw new NotFoundException('Patient not found');
+    }
+
+    const isPatient = patient.userId === userId;
+    const isDoctor = user?.role === 'DOCTOR';
+    const isAdmin = user?.role === 'ADMIN';
+
+    if (!isPatient && !isDoctor && !isAdmin) {
+      throw new ForbiddenException('Not authorized to view patient documents');
+    }
+
+    const documents = await this.prisma.appointmentDocument.findMany({
+      where: {
+        appointment: {
+          patientId,
+        },
+      },
+      include: {
+        appointment: {
+          select: {
+            id: true,
+            appointmentDate: true,
+            doctor: {
+              select: {
+                user: {
+                  select: {
+                    fullName: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return documents.map((doc) => ({
+      id: doc.id,
+      title: doc.title,
+      documentType: doc.documentType,
+      documentUrl: doc.documentUrl,
+      notes: doc.notes,
+      createdAt: doc.createdAt,
+      appointmentId: doc.appointmentId,
+      appointmentDate: doc.appointment.appointmentDate,
+      doctorName: doc.appointment.doctor.user.fullName,
+    }));
+  }
+
   async deleteAppointmentDocument(documentId: string, userId: string) {
     const document = await this.prisma.appointmentDocument.findUnique({
       where: { id: documentId },

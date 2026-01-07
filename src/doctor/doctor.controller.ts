@@ -27,6 +27,7 @@ import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles, CurrentUser } from '../auth/decorators';
 import { UserRole } from '../common/constants';
 import { PrescriptionService, UpdatePrescriptionDto } from '../prescription';
+import { UploadService } from '../upload/upload.service';
 
 @ApiTags('Doctor')
 @Controller('doctors')
@@ -34,6 +35,7 @@ export class DoctorController {
   constructor(
     private readonly doctorService: DoctorService,
     private readonly prescriptionService: PrescriptionService,
+    private readonly uploadService: UploadService,
   ) {}
 
   @Get()
@@ -278,6 +280,64 @@ export class DoctorController {
   async getPrescription(@Param('appointmentId') appointmentId: string) {
     const items = await this.prescriptionService.getPrescription(appointmentId);
     return ApiResponse.success(items, 'Lấy đơn thuốc thành công');
+  }
+
+  @Get('me/documents')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Lấy danh sách tài liệu y tế của tôi' })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Lấy danh sách tài liệu thành công',
+  })
+  @ApiResponseSwagger({
+    status: 403,
+    description: 'Không có quyền truy cập',
+  })
+  async getMyDocuments(
+    @CurrentUser('sub') userId: string,
+    @CurrentUser('doctorId') doctorId: string,
+  ) {
+    if (!doctorId) {
+      throw new ForbiddenException(
+        'Không tìm thấy thông tin bác sĩ. Vui lòng liên hệ quản trị viên.',
+      );
+    }
+    const documents = await this.uploadService.getDoctorDocuments(
+      doctorId,
+      userId,
+    );
+    return ApiResponse.success(documents, 'Lấy danh sách tài liệu thành công');
+  }
+
+  @Get('me/patients/:patientId/documents')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Lấy danh sách tài liệu y tế của bệnh nhân' })
+  @ApiParam({ name: 'patientId', description: 'ID bệnh nhân' })
+  @ApiResponseSwagger({
+    status: 200,
+    description: 'Lấy danh sách tài liệu thành công',
+  })
+  @ApiResponseSwagger({
+    status: 403,
+    description: 'Không có quyền truy cập',
+  })
+  @ApiResponseSwagger({
+    status: 404,
+    description: 'Không tìm thấy bệnh nhân',
+  })
+  async getPatientDocuments(
+    @CurrentUser('sub') userId: string,
+    @Param('patientId') patientId: string,
+  ) {
+    const documents = await this.uploadService.getPatientDocuments(
+      patientId,
+      userId,
+    );
+    return ApiResponse.success(documents, 'Lấy danh sách tài liệu thành công');
   }
 
   @Get(':id')

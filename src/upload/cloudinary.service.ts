@@ -51,7 +51,13 @@ export class CloudinaryService {
     folder: UploadFolder = UploadFolder.MEDICAL_DOCUMENTS,
   ): Promise<UploadResult> {
     this.validateFile(file, this.allowedDocumentTypes, this.maxDocumentSize);
-    return this.upload(file, folder, 'auto');
+    const isPdf = file.mimetype === 'application/pdf';
+    const isWord =
+      file.mimetype === 'application/msword' ||
+      file.mimetype ===
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const resourceType = isPdf || isWord ? 'raw' : 'auto';
+    return this.upload(file, folder, resourceType);
   }
 
   async uploadMultipleDocuments(
