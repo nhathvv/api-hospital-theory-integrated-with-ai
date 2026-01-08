@@ -120,17 +120,40 @@ export class UploadService {
       },
     });
 
-    return documents.map((doc) => ({
-      id: doc.id,
-      title: doc.title,
-      documentType: doc.documentType,
-      documentUrl: doc.documentUrl,
-      notes: doc.notes,
-      createdAt: doc.createdAt,
-      appointmentId: doc.appointmentId,
-      appointmentDate: doc.appointment.appointmentDate,
-      patientName: doc.appointment.patient.user.fullName,
-    }));
+    const documentIds = documents.map((d) => d.id);
+    const blockchainTxs = await this.prisma.blockchainTransaction.findMany({
+      where: {
+        recordType: 'MEDICAL_RECORD',
+        recordId: { in: documentIds },
+        status: 'CONFIRMED',
+      },
+      select: {
+        recordId: true,
+        dataHash: true,
+        txHash: true,
+      },
+    });
+
+    const blockchainMap = new Map(blockchainTxs.map((tx) => [tx.recordId, tx]));
+
+    return documents.map((doc) => {
+      const blockchain = blockchainMap.get(doc.id);
+      return {
+        id: doc.id,
+        title: doc.title,
+        documentType: doc.documentType,
+        documentUrl: doc.documentUrl,
+        notes: doc.notes,
+        createdAt: doc.createdAt,
+        appointmentId: doc.appointmentId,
+        appointmentDate: doc.appointment.appointmentDate,
+        patientName: doc.appointment.patient.user.fullName,
+        fileContentHash: doc.fileContentHash,
+        blockchain: blockchain
+          ? { dataHash: blockchain.dataHash, txHash: blockchain.txHash }
+          : null,
+      };
+    });
   }
 
   async getPatientDocuments(patientId: string, userId: string) {
@@ -184,17 +207,40 @@ export class UploadService {
       },
     });
 
-    return documents.map((doc) => ({
-      id: doc.id,
-      title: doc.title,
-      documentType: doc.documentType,
-      documentUrl: doc.documentUrl,
-      notes: doc.notes,
-      createdAt: doc.createdAt,
-      appointmentId: doc.appointmentId,
-      appointmentDate: doc.appointment.appointmentDate,
-      doctorName: doc.appointment.doctor.user.fullName,
-    }));
+    const documentIds = documents.map((d) => d.id);
+    const blockchainTxs = await this.prisma.blockchainTransaction.findMany({
+      where: {
+        recordType: 'MEDICAL_RECORD',
+        recordId: { in: documentIds },
+        status: 'CONFIRMED',
+      },
+      select: {
+        recordId: true,
+        dataHash: true,
+        txHash: true,
+      },
+    });
+
+    const blockchainMap = new Map(blockchainTxs.map((tx) => [tx.recordId, tx]));
+
+    return documents.map((doc) => {
+      const blockchain = blockchainMap.get(doc.id);
+      return {
+        id: doc.id,
+        title: doc.title,
+        documentType: doc.documentType,
+        documentUrl: doc.documentUrl,
+        notes: doc.notes,
+        createdAt: doc.createdAt,
+        appointmentId: doc.appointmentId,
+        appointmentDate: doc.appointment.appointmentDate,
+        doctorName: doc.appointment.doctor.user.fullName,
+        fileContentHash: doc.fileContentHash,
+        blockchain: blockchain
+          ? { dataHash: blockchain.dataHash, txHash: blockchain.txHash }
+          : null,
+      };
+    });
   }
 
   async getDocumentById(documentId: string) {
