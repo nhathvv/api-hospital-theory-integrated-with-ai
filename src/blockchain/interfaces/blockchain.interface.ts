@@ -63,6 +63,9 @@ export interface VerifyMedicalRecordResult {
   recordType: MedicalRecordBlockchainType;
   timestamp: number;
   message: string;
+  uploadedFileHash?: string;
+  calculatedDataHash?: string;
+  originalDataHash?: string;
 }
 
 export enum MedicalRecordBlockchainType {

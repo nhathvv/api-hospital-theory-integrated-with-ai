@@ -363,6 +363,111 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
     };
   }
 
+  async verifyUploadedFile(
+    documentId: string,
+    fileBuffer: Buffer,
+  ): Promise<VerifyMedicalRecordResult> {
+    if (!this.isServiceEnabled()) {
+      return {
+        isValid: false,
+        isRevoked: false,
+        recordType: MedicalRecordBlockchainType.OTHER,
+        timestamp: 0,
+        message: 'Medical Record Blockchain service is not enabled',
+      };
+    }
+
+    const document = await this.prisma.appointmentDocument.findUnique({
+      where: { id: documentId },
+    });
+
+    if (!document) {
+      ExceptionUtils.throwNotFound('Document not found');
+    }
+
+    const blockchainTx = await this.prisma.blockchainTransaction.findFirst({
+      where: {
+        recordType: 'MEDICAL_RECORD',
+        recordId: documentId,
+        status: 'CONFIRMED',
+      },
+    });
+
+    if (!blockchainTx) {
+      return {
+        isValid: false,
+        isRevoked: false,
+        recordType: MedicalRecordBlockchainType.OTHER,
+        timestamp: 0,
+        message: 'Document has not been recorded on blockchain',
+      };
+    }
+
+    const uploadedFileHash = crypto
+      .createHash('sha256')
+      .update(fileBuffer)
+      .digest('hex');
+
+    this.logger.log(`Uploaded file hash: ${uploadedFileHash}`);
+
+    const hashData: MedicalRecordHashData = {
+      documentId: document.id,
+      appointmentId: document.appointmentId,
+      title: document.title,
+      documentType: document.documentType,
+      documentUrl: document.documentUrl,
+      uploadedById: document.uploadedById,
+      createdAt: document.createdAt.toISOString(),
+      fileContentHash: uploadedFileHash,
+    };
+
+    const calculatedHash = this.blockchainService.generateHash(hashData);
+
+    if (!this.medicalRecordContract) {
+      return {
+        isValid: false,
+        isRevoked: false,
+        recordType: MedicalRecordBlockchainType.OTHER,
+        timestamp: 0,
+        message: 'Medical Record contract not available',
+      };
+    }
+
+    const recordIdBytes = this.blockchainService.stringToBytes32(document.id);
+    const calculatedHashBytes = '0x' + calculatedHash;
+
+    const [isValid, isRevoked, recordType, timestamp] =
+      await this.medicalRecordContract.verifyRecord(
+        recordIdBytes,
+        calculatedHashBytes,
+      );
+
+    if (isValid) {
+      return {
+        isValid: true,
+        isRevoked: isRevoked,
+        recordType: Number(recordType) as MedicalRecordBlockchainType,
+        timestamp: Number(timestamp),
+        message: isRevoked
+          ? 'Document has been revoked'
+          : 'File is authentic and matches blockchain record',
+        uploadedFileHash,
+        calculatedDataHash: calculatedHash,
+      };
+    }
+
+    return {
+      isValid: false,
+      isRevoked: isRevoked,
+      recordType: Number(recordType) as MedicalRecordBlockchainType,
+      timestamp: Number(timestamp),
+      message: 'File does NOT match the original. It may have been tampered with.',
+      uploadedFileHash,
+      calculatedDataHash: calculatedHash,
+      originalDataHash: blockchainTx.dataHash,
+    };
+  }
+
   async getBlockchainStatistics() {
     if (!this.isServiceEnabled() || !this.medicalRecordContract) {
       return {

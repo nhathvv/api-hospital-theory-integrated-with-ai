@@ -283,6 +283,42 @@ export class UploadController {
     return ApiResponse.success(result, 'Xác minh tài liệu thành công');
   }
 
+  @Post('document/:documentId/blockchain/verify-file')
+  @Roles(UserRole.PATIENT, UserRole.DOCTOR, UserRole.ADMIN)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Xác minh file đã tải về với blockchain',
+    description: `
+      Upload file đã tải về để kiểm tra tính toàn vẹn.
+      BE sẽ tính hash của file và so sánh với dữ liệu trên blockchain.
+      Đây là cách verify TRUSTLESS - không phụ thuộc vào dữ liệu trong DB.
+    `,
+  })
+  @ApiParam({ name: 'documentId', description: 'ID tài liệu' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @ApiResponseSwagger({ status: 200, description: 'Xác minh thành công' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy tài liệu' })
+  async verifyFileOnBlockchain(
+    @Param('documentId') documentId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const result =
+      await this.medicalRecordBlockchainService.verifyUploadedFile(
+        documentId,
+        file.buffer,
+      );
+    return ApiResponse.success(result, 'Xác minh file thành công');
+  }
+
   @Get('document/:documentId/blockchain')
   @Roles(UserRole.PATIENT, UserRole.DOCTOR, UserRole.ADMIN)
   @ApiOperation({
