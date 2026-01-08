@@ -115,11 +115,18 @@ export class CloudinaryService {
       .update(file.buffer)
       .digest('hex');
 
+    const sanitizedFilename = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const rawPublicId =
+      resourceType === 'raw' ? `${Date.now()}_${sanitizedFilename}` : undefined;
+
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder,
           resource_type: resourceType,
+          public_id: rawPublicId,
+          type: 'upload',
+          access_mode: 'public',
           transformation:
             resourceType === 'image'
               ? [{ quality: 'auto', fetch_format: 'auto' }]

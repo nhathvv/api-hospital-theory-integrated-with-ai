@@ -5,6 +5,7 @@ import {
   seedMedicineCategories,
   seedSpecialties,
   seedMedicines,
+  seedMedicineBatches,
   seedDoctors,
 } from './seeds';
 
@@ -18,6 +19,7 @@ async function main() {
   await seedMedicineCategories(prisma);
   await seedSpecialties(prisma);
   await seedMedicines(prisma);
+  await seedMedicineBatches(prisma);
   await seedDoctors(prisma);
 
   console.log('\n✅ Database seed completed successfully!');

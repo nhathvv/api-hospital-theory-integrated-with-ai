@@ -197,6 +197,18 @@ export class UploadService {
     }));
   }
 
+  async getDocumentById(documentId: string) {
+    const document = await this.prisma.appointmentDocument.findUnique({
+      where: { id: documentId },
+    });
+
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+
+    return document;
+  }
+
   async deleteAppointmentDocument(documentId: string, userId: string) {
     const document = await this.prisma.appointmentDocument.findUnique({
       where: { id: documentId },

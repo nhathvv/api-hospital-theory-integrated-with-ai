@@ -218,6 +218,7 @@ export class DoctorController {
         + Cập nhật tổng tiền (totalFee = consultationFee + medicineFee)
         + Trừ số lượng tồn kho của các lô thuốc
         + Cập nhật trạng thái lô thuốc nếu cần (LOW_STOCK, OUT_OF_STOCK)
+        + **Tự động chuyển trạng thái lịch hẹn sang COMPLETED**
       - Nếu kê đơn lại, đơn cũ sẽ bị xóa và hoàn lại số lượng thuốc vào kho
     `,
   })

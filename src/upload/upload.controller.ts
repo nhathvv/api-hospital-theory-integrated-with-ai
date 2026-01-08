@@ -10,7 +10,10 @@ import {
   Param,
   Delete,
   Logger,
+  Res,
+  Query,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -295,6 +298,49 @@ export class UploadController {
         documentId,
       );
     return ApiResponse.success(result, 'Lấy thông tin blockchain thành công');
+  }
+
+  @Get('document/:documentId/file')
+  @Roles(UserRole.PATIENT, UserRole.DOCTOR, UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Proxy để xem/tải tài liệu',
+    description: 'Serve file trực tiếp từ server, bypass CORS issues',
+  })
+  @ApiParam({ name: 'documentId', description: 'ID tài liệu' })
+  @ApiResponseSwagger({ status: 200, description: 'File stream' })
+  @ApiResponseSwagger({ status: 404, description: 'Không tìm thấy tài liệu' })
+  async proxyDocumentFile(
+    @Param('documentId') documentId: string,
+    @Query('download') download: string,
+    @Res() res: Response,
+  ) {
+    const document = await this.uploadService.getDocumentById(documentId);
+    const fileUrl = document.documentUrl;
+
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      return res.status(response.status).json({
+        success: false,
+        message: 'Không thể tải file từ storage',
+      });
+    }
+
+    const contentType =
+      response.headers.get('content-type') || 'application/octet-stream';
+    const filename = fileUrl.split('/').pop() || 'document';
+
+    res.setHeader('Content-Type', contentType);
+    if (download === 'true') {
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${encodeURIComponent(document.title)}.${filename.split('.').pop()}"`,
+      );
+    } else {
+      res.setHeader('Content-Disposition', 'inline');
+    }
+
+    const buffer = await response.arrayBuffer();
+    res.send(Buffer.from(buffer));
   }
 }
 

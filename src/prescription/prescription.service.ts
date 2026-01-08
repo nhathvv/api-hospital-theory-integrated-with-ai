@@ -112,10 +112,11 @@ export class PrescriptionService {
   ) {
     const batchMap = new Map(batches.map((b) => [b.id, b]));
 
-    return this.prisma.$transaction(async (tx) => {
-      const existingItems = await tx.prescriptionItem.findMany({
-        where: { appointmentId: appointment.id },
-      });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const existingItems = await tx.prescriptionItem.findMany({
+          where: { appointmentId: appointment.id },
+        });
 
       for (const existingItem of existingItems) {
         await tx.medicineBatch.update({
@@ -165,6 +166,8 @@ export class PrescriptionService {
         data: {
           medicineFee: totalMedicineFee,
           totalFee,
+          status: AppointmentStatus.COMPLETED,
+          completedAt: new Date(),
         },
         include: {
           prescriptionItems: {
@@ -200,7 +203,7 @@ export class PrescriptionService {
       });
 
       this.logger.log(
-        `Prescription updated for appointment ${appointment.id}. Medicine fee: ${totalMedicineFee}, Total fee: ${totalFee}`,
+        `Prescription created and appointment completed: ${appointment.id}. Medicine fee: ${totalMedicineFee}, Total fee: ${totalFee}`,
       );
 
       await this.updateBatchStatuses(
@@ -209,7 +212,9 @@ export class PrescriptionService {
       );
 
       return this.formatPrescriptionResponse(updatedAppointment);
-    });
+      },
+      { timeout: 30000 },
+    );
   }
 
   private async updateBatchStatuses(
@@ -248,6 +253,8 @@ export class PrescriptionService {
 
   private formatPrescriptionResponse(appointment: {
     id: string;
+    status: AppointmentStatus;
+    completedAt: Date | null;
     consultationFee: number | null;
     medicineFee: number;
     totalFee: number;
@@ -275,6 +282,8 @@ export class PrescriptionService {
   }) {
     return {
       id: appointment.id,
+      status: appointment.status,
+      completedAt: appointment.completedAt,
       consultationFee: appointment.consultationFee,
       medicineFee: appointment.medicineFee,
       totalFee: appointment.totalFee,
