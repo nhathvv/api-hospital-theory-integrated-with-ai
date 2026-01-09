@@ -229,7 +229,7 @@ model Appointment {
   updatedAt          DateTime              @updatedAt
   documents          AppointmentDocument[]
   prescriptionItems  PrescriptionItem[]
-  payment            Payment?
+  payments           Payment[]
   doctor             Doctor                @relation(fields: [doctorId], references: [id])
   patient            Patient               @relation(fields: [patientId], references: [id])
   timeSlot           DoctorTimeSlot        @relation(fields: [timeSlotId], references: [id])
@@ -346,36 +346,45 @@ model PrescriptionItem {
 }
 
 model Payment {
-  id               String        @id @default(uuid())
-  paymentCode      String        @unique
-  appointmentId    String        @unique
-  appointment      Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  id               String               @id @default(uuid())
+  paymentCode      String               @unique
+  appointmentId    String
+  appointment      Appointment          @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  type             PaymentType          @default(CONSULTATION)
+  amount           Int                  @default(0)
   method           PaymentMethod
-  status           PaymentStatus @default(PENDING)
+  status           PaymentStatus        @default(PENDING)
   dataHash         String?
   blockchainTxHash String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  transactions     PaymentTransaction[]
 
   @@index([appointmentId])
   @@index([paymentCode])
   @@index([blockchainTxHash])
   @@map("payments")
 }
+
 model PaymentTransaction {
-  id                 Int      @id @default(autoincrement()) // // ID giao dịch trên SePay
-  gateway            String   @db.VarChar(100) // Tên cổng thanh toán
-  transactionDate    DateTime @default(now()) //  Thời gian xảy ra giao dịch phía ngân hàng
-  accountNumber      String   @db.VarChar(100) // Số tài khoản ngân hàng
-  subAccount         String?  @db.VarChar(250) // Mã tài khoản phụ (nếu có)
-  amountIn           Int      @default(0) // Số tiền nhận vào (VND)
-  amountOut          Int      @default(0) // Số tiền chuyển ra (VND)
-  accumulated        Int      @default(0) // Số dư tích lũy (VND)
-  code               String?  @db.VarChar(250) //  Mã code thanh toán (sepay tự nhận diện dựa vào cấu hình tại Công ty -> Cấu hình chung)
-  transactionContent String?  @db.Text // Nội dung giao dịch
-  referenceNumber    String?  @db.VarChar(255) // Số tham chiếu từ ngân hàng
-  body               String?  @db.Text // Dữ liệu gốc từ webhook
-  createdAt DateTime @default(now())
+  id                 Int      @id @default(autoincrement())
+  gateway            String   @db.VarChar(100)
+  transactionDate    DateTime @default(now())
+  accountNumber      String   @db.VarChar(100)
+  subAccount         String?  @db.VarChar(250)
+  amountIn           Int      @default(0)
+  amountOut          Int      @default(0)
+  accumulated        Int      @default(0)
+  code               String?  @db.VarChar(250)
+  transactionContent String?  @db.Text
+  referenceNumber    String?  @db.VarChar(255)
+  body               String?  @db.Text
+  paymentId          String?
+  payment            Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  createdAt          DateTime @default(now())
+
+  @@index([paymentId])
+  @@map("payment_transactions")
 }
 model BlockchainTransaction {
   id          String              @id @default(uuid())
@@ -411,6 +420,12 @@ enum PaymentMethod {
   CASH
   BANK_TRANSFER
 }
+
+enum PaymentType {
+  CONSULTATION
+  MEDICINE
+}
+
 enum PaymentStatus {
   PENDING
   SUCCESS

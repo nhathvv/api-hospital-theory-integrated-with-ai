@@ -6,13 +6,13 @@ import {
 } from '../dto';
 import { PaymentStatus, TransferType } from '../enum';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, PaymentType, AppointmentStatus } from '@prisma/client';
 
 @Injectable()
 export class PaymentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createTransaction(data: WebhookPaymentBodyDto) {
+  async createTransaction(data: WebhookPaymentBodyDto, paymentId?: string) {
     const [amountIn, amountOut] =
       data.transferType === TransferType.IN
         ? [data.transferAmount, 0]
@@ -32,7 +32,15 @@ export class PaymentRepository {
         transactionContent: data.content,
         body: data.description,
         referenceNumber: data.referenceCode,
+        paymentId: paymentId ?? null,
       },
+    });
+  }
+
+  async linkTransactionToPayment(transactionId: number, paymentId: string) {
+    return this.prisma.paymentTransaction.update({
+      where: { id: transactionId },
+      data: { paymentId },
     });
   }
 
@@ -83,13 +91,22 @@ export class PaymentRepository {
       });
 
       if (status === PaymentStatus.SUCCESS && payment.appointment) {
-        await tx.appointment.update({
-          where: { id: payment.appointment.id },
-          data: {
-            status: 'COMPLETED',
-            completedAt: new Date(),
-          },
-        });
+        if (payment.type === PaymentType.CONSULTATION) {
+          await tx.appointment.update({
+            where: { id: payment.appointment.id },
+            data: {
+              status: AppointmentStatus.CONFIRMED,
+            },
+          });
+        } else if (payment.type === PaymentType.MEDICINE) {
+          await tx.appointment.update({
+            where: { id: payment.appointment.id },
+            data: {
+              status: AppointmentStatus.COMPLETED,
+              completedAt: new Date(),
+            },
+          });
+        }
       }
 
       return payment;
@@ -146,11 +163,22 @@ export class PaymentRepository {
 
   private getPatientPaymentIncludes() {
     return {
+      transactions: {
+        select: {
+          id: true,
+          amountIn: true,
+          transactionDate: true,
+          transactionContent: true,
+        },
+        orderBy: { transactionDate: 'asc' as const },
+      },
       appointment: {
         select: {
           id: true,
           appointmentDate: true,
           consultationFee: true,
+          medicineFee: true,
+          totalFee: true,
           status: true,
           examinationType: true,
           doctor: {
@@ -168,11 +196,23 @@ export class PaymentRepository {
 
   private getPatientPaymentDetailIncludes() {
     return {
+      transactions: {
+        select: {
+          id: true,
+          amountIn: true,
+          transactionDate: true,
+          transactionContent: true,
+          referenceNumber: true,
+        },
+        orderBy: { transactionDate: 'asc' as const },
+      },
       appointment: {
         select: {
           id: true,
           appointmentDate: true,
           consultationFee: true,
+          medicineFee: true,
+          totalFee: true,
           status: true,
           examinationType: true,
           symptoms: true,

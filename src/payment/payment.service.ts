@@ -51,20 +51,29 @@ export class PaymentService {
     this.logger.log(
       `Received payment webhook: transactionId=${data.id}, code=${data.code}`,
     );
-    await this.paymentRepository.createTransaction(data);
+
+    const transaction = await this.paymentRepository.createTransaction(data);
+
     if (data.transferType !== TransferType.IN) {
       return { success: true, message: 'Outgoing transfer recorded' };
     }
+
     const paymentCode = this.extractPaymentCode(data);
     const payment = await this.validateAndGetPayment(
       paymentCode,
       data.transferAmount,
     );
 
+    await this.paymentRepository.linkTransactionToPayment(
+      transaction.id,
+      payment.id,
+    );
+
     if (payment.status === PaymentStatus.SUCCESS) {
       this.logger.warn(`Payment ${paymentCode} already processed, skipping`);
       return { success: true, message: 'Payment already processed' };
     }
+
     await this.paymentRepository.updatePaymentStatus(
       paymentCode,
       PaymentStatus.SUCCESS,
@@ -140,13 +149,9 @@ export class PaymentService {
       );
     }
 
-    const isFullPayment = appointment.totalFee === transferAmount;
-    const isMedicinePayment =
-      appointment.medicineFee > 0 && appointment.medicineFee === transferAmount;
-
-    if (!isFullPayment && !isMedicinePayment) {
+    if (payment.amount !== transferAmount) {
       ExceptionUtils.throwBadRequest(
-        `Payment amount (${transferAmount}) does not match total fee (${appointment.totalFee}) or medicine fee (${appointment.medicineFee})`,
+        `Payment amount (${transferAmount}) does not match expected amount (${payment.amount})`,
       );
     }
 

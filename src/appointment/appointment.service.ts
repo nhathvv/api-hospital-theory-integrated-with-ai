@@ -18,6 +18,7 @@ import {
   DayOfWeek,
   DoctorStatus,
   CancellationReason,
+  PaymentType,
 } from '@prisma/client';
 import { PaymentStatus } from 'src/payment/enum';
 import { TransactionUtils, CodeGeneratorUtils } from '../common/utils';
@@ -93,6 +94,8 @@ export class AppointmentService {
           data: {
             appointmentId: newAppointment.id,
             paymentCode,
+            type: PaymentType.CONSULTATION,
+            amount: consultationFee,
             status: PaymentStatus.PENDING,
             method: paymentMethod,
           },
@@ -108,7 +111,7 @@ export class AppointmentService {
       `Appointment created: ${appointment.id} with Payment: ${payment.paymentCode} for patient ${patientId} with doctor ${doctorId}`,
     );
 
-    return this.formatAppointmentResponse(appointment, payment);
+    return this.formatAppointmentResponse(appointment, [payment]);
   }
 
   async findAll(query: QueryAppointmentDto) {
@@ -151,13 +154,16 @@ export class AppointmentService {
         where,
         include: {
           ...this.getAppointmentIncludes(),
-          payment: {
+          payments: {
             select: {
               id: true,
               paymentCode: true,
+              type: true,
+              amount: true,
               method: true,
               status: true,
             },
+            orderBy: { createdAt: 'asc' },
           },
         },
         orderBy: query.getPrismaSortParams(),
@@ -167,7 +173,7 @@ export class AppointmentService {
     ]);
 
     const data = appointments.map((appointment) =>
-      this.formatAppointmentResponse(appointment, appointment.payment),
+      this.formatAppointmentResponse(appointment, appointment.payments),
     );
 
     return { data, totalItems };
@@ -201,13 +207,16 @@ export class AppointmentService {
         where,
         include: {
           ...this.getAppointmentIncludes(),
-          payment: {
+          payments: {
             select: {
               id: true,
               paymentCode: true,
+              type: true,
+              amount: true,
               method: true,
               status: true,
             },
+            orderBy: { createdAt: 'asc' },
           },
         },
         orderBy: query.getPrismaSortParams(),
@@ -217,7 +226,7 @@ export class AppointmentService {
     ]);
 
     const data = appointments.map((appointment) =>
-      this.formatAppointmentResponse(appointment, appointment.payment),
+      this.formatAppointmentResponse(appointment, appointment.payments),
     );
 
     return { data, totalItems };
@@ -228,13 +237,16 @@ export class AppointmentService {
       where: { id: appointmentId },
       include: {
         ...this.getAppointmentIncludes(),
-        payment: {
+        payments: {
           select: {
             id: true,
             paymentCode: true,
+            type: true,
+            amount: true,
             method: true,
             status: true,
           },
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
@@ -243,7 +255,7 @@ export class AppointmentService {
       throw new NotFoundException('Không tìm thấy lịch hẹn');
     }
 
-    return this.formatAppointmentResponse(appointment, appointment.payment);
+    return this.formatAppointmentResponse(appointment, appointment.payments);
   }
 
   async cancel(
@@ -268,7 +280,7 @@ export class AppointmentService {
             userId: true,
           },
         },
-        payment: {
+        payments: {
           select: {
             id: true,
             status: true,
@@ -312,26 +324,27 @@ export class AppointmentService {
           },
           include: {
             ...this.getAppointmentIncludes(),
-            payment: {
+            payments: {
               select: {
                 id: true,
                 paymentCode: true,
+                type: true,
+                amount: true,
                 method: true,
                 status: true,
               },
+              orderBy: { createdAt: 'asc' },
             },
           },
         });
 
-        if (
-          appointment.payment &&
-          appointment.payment.status === PaymentStatus.PENDING
-        ) {
-          await tx.payment.update({
-            where: { id: appointment.payment.id },
-            data: { status: PaymentStatus.FAILED },
-          });
-        }
+        await tx.payment.updateMany({
+          where: {
+            appointmentId: appointmentId,
+            status: PaymentStatus.PENDING,
+          },
+          data: { status: PaymentStatus.FAILED },
+        });
 
         return updatedAppointment;
       },
@@ -341,13 +354,13 @@ export class AppointmentService {
       `Appointment cancelled: ${appointmentId} by user ${userId}, reason: ${reason}`,
     );
 
-    return this.formatCancelledAppointmentResponse(result, result.payment);
+    return this.formatCancelledAppointmentResponse(result, result.payments);
   }
 
   async updateStatus(appointmentId: string, newStatus: AppointmentStatus) {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id: appointmentId },
-      include: { payment: true },
+      include: { payments: true },
     });
 
     if (!appointment) {
@@ -386,13 +399,16 @@ export class AppointmentService {
       data: updateData,
       include: {
         ...this.getAppointmentIncludes(),
-        payment: {
+        payments: {
           select: {
             id: true,
             paymentCode: true,
+            type: true,
+            amount: true,
             method: true,
             status: true,
           },
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
@@ -401,7 +417,7 @@ export class AppointmentService {
       `Appointment status updated: ${appointmentId} from ${appointment.status} to ${newStatus}`,
     );
 
-    return this.formatAppointmentResponse(updated, updated.payment);
+    return this.formatAppointmentResponse(updated, updated.payments);
   }
 
   async cancelByPatient(
@@ -420,7 +436,7 @@ export class AppointmentService {
             userId: true,
           },
         },
-        payment: {
+        payments: {
           select: {
             id: true,
             status: true,
@@ -457,26 +473,27 @@ export class AppointmentService {
           },
           include: {
             ...this.getAppointmentIncludes(),
-            payment: {
+            payments: {
               select: {
                 id: true,
                 paymentCode: true,
+                type: true,
+                amount: true,
                 method: true,
                 status: true,
               },
+              orderBy: { createdAt: 'asc' },
             },
           },
         });
 
-        if (
-          appointment.payment &&
-          appointment.payment.status === PaymentStatus.PENDING
-        ) {
-          await tx.payment.update({
-            where: { id: appointment.payment.id },
-            data: { status: PaymentStatus.FAILED },
-          });
-        }
+        await tx.payment.updateMany({
+          where: {
+            appointmentId: appointmentId,
+            status: PaymentStatus.PENDING,
+          },
+          data: { status: PaymentStatus.FAILED },
+        });
 
         return updatedAppointment;
       },
@@ -486,7 +503,7 @@ export class AppointmentService {
       `Appointment cancelled by patient: ${appointmentId}, reason: ${reason}`,
     );
 
-    return this.formatCancelledAppointmentResponse(result, result.payment);
+    return this.formatCancelledAppointmentResponse(result, result.payments);
   }
 
   async cancelByAdmin(
@@ -499,7 +516,7 @@ export class AppointmentService {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id: appointmentId },
       include: {
-        payment: {
+        payments: {
           select: {
             id: true,
             status: true,
@@ -536,26 +553,27 @@ export class AppointmentService {
           },
           include: {
             ...this.getAppointmentIncludes(),
-            payment: {
+            payments: {
               select: {
                 id: true,
                 paymentCode: true,
+                type: true,
+                amount: true,
                 method: true,
                 status: true,
               },
+              orderBy: { createdAt: 'asc' },
             },
           },
         });
 
-        if (
-          appointment.payment &&
-          appointment.payment.status === PaymentStatus.PENDING
-        ) {
-          await tx.payment.update({
-            where: { id: appointment.payment.id },
-            data: { status: PaymentStatus.FAILED },
-          });
-        }
+        await tx.payment.updateMany({
+          where: {
+            appointmentId: appointmentId,
+            status: PaymentStatus.PENDING,
+          },
+          data: { status: PaymentStatus.FAILED },
+        });
 
         return updatedAppointment;
       },
@@ -565,7 +583,7 @@ export class AppointmentService {
       `Appointment cancelled by admin: ${appointmentId}, reason: ${reason}`,
     );
 
-    return this.formatCancelledAppointmentResponse(result, result.payment);
+    return this.formatCancelledAppointmentResponse(result, result.payments);
   }
 
   private getStatusVietnamese(status: AppointmentStatus): string {
@@ -580,8 +598,8 @@ export class AppointmentService {
     return statusMap[status];
   }
 
-  private formatCancelledAppointmentResponse(appointment: any, payment?: any) {
-    const response = this.formatAppointmentResponse(appointment, payment);
+  private formatCancelledAppointmentResponse(appointment: any, payments?: any[]) {
+    const response = this.formatAppointmentResponse(appointment, payments);
     return {
       ...response,
       cancelledAt: appointment.cancelledAt?.toISOString(),
@@ -893,7 +911,15 @@ export class AppointmentService {
     };
   }
 
-  private formatAppointmentResponse(appointment: any, payment?: any) {
+  private formatAppointmentResponse(appointment: any, payments?: any[]) {
+    const paymentsArray = Array.isArray(payments) ? payments : payments ? [payments] : [];
+    const consultationPayment = paymentsArray.find(
+      (p) => p.type === PaymentType.CONSULTATION,
+    );
+    const medicinePayment = paymentsArray.find(
+      (p) => p.type === PaymentType.MEDICINE,
+    );
+
     const response: any = {
       id: appointment.id,
       appointmentDate: appointment.appointmentDate.toISOString().split('T')[0],
@@ -934,14 +960,36 @@ export class AppointmentService {
       createdAt: appointment.createdAt.toISOString(),
     };
 
-    if (payment) {
+    if (consultationPayment) {
       response.payment = {
-        id: payment.id,
-        paymentCode: payment.paymentCode,
-        method: payment.method,
-        status: payment.status,
+        id: consultationPayment.id,
+        paymentCode: consultationPayment.paymentCode,
+        type: consultationPayment.type,
+        amount: consultationPayment.amount,
+        method: consultationPayment.method,
+        status: consultationPayment.status,
       };
     }
+
+    if (medicinePayment) {
+      response.medicinePayment = {
+        id: medicinePayment.id,
+        paymentCode: medicinePayment.paymentCode,
+        type: medicinePayment.type,
+        amount: medicinePayment.amount,
+        method: medicinePayment.method,
+        status: medicinePayment.status,
+      };
+    }
+
+    response.payments = paymentsArray.map((p) => ({
+      id: p.id,
+      paymentCode: p.paymentCode,
+      type: p.type,
+      amount: p.amount,
+      method: p.method,
+      status: p.status,
+    }));
 
     return response;
   }

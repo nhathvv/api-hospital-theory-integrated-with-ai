@@ -25,6 +25,8 @@
     "prisma:push": "prisma db push",
     "prisma:pull": "prisma db pull",
     "prisma:seed": "prisma db seed",
+    "prisma:migrate:payment": "npx ts-node prisma/migrations/migrate-payment-data.ts",
+    "prisma:clear:test": "npx ts-node prisma/migrations/clear-test-data.ts",
     "docker:dev:build": "docker compose build",
     "docker:dev:up": "docker compose up -d",
     "docker:dev:down": "docker compose down",

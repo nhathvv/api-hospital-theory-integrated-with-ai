@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AppointmentStatus, BatchStatus } from '@prisma/client';
+import { AppointmentStatus, BatchStatus, PaymentType, PaymentMethod } from '@prisma/client';
 import { PrismaService } from '../prisma';
-import { ExceptionUtils } from '../common/utils';
+import { ExceptionUtils, CodeGeneratorUtils } from '../common/utils';
 import { UpdatePrescriptionDto, CreatePrescriptionItemDto } from './dto';
+import { PaymentStatus } from '../payment/enum';
 
 @Injectable()
 export class PrescriptionService {
@@ -208,10 +209,34 @@ export class PrescriptionService {
         });
 
         if (hasMedicineFee) {
-          await tx.payment.updateMany({
-            where: { appointmentId: appointment.id },
-            data: { status: 'PENDING' },
+          const existingMedicinePayment = await tx.payment.findFirst({
+            where: {
+              appointmentId: appointment.id,
+              type: PaymentType.MEDICINE,
+            },
           });
+
+          if (existingMedicinePayment) {
+            await tx.payment.update({
+              where: { id: existingMedicinePayment.id },
+              data: {
+                amount: totalMedicineFee,
+                status: PaymentStatus.PENDING,
+              },
+            });
+          } else {
+            const paymentCode = await this.generatePaymentCode(tx);
+            await tx.payment.create({
+              data: {
+                appointmentId: appointment.id,
+                paymentCode,
+                type: PaymentType.MEDICINE,
+                amount: totalMedicineFee,
+                method: PaymentMethod.BANK_TRANSFER,
+                status: PaymentStatus.PENDING,
+              },
+            });
+          }
         }
 
         this.logger.log(
@@ -320,5 +345,24 @@ export class PrescriptionService {
         totalPrice: item.totalPrice,
       })),
     };
+  }
+
+  private async generatePaymentCode(
+    tx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
+  ): Promise<string> {
+    const todayPrefix = CodeGeneratorUtils.getTodayPrefix();
+
+    const lastPayment = await tx.payment.findFirst({
+      where: { paymentCode: { startsWith: todayPrefix } },
+      orderBy: { paymentCode: 'desc' },
+      select: { paymentCode: true },
+    });
+
+    if (lastPayment?.paymentCode) {
+      const lastSequence = parseInt(lastPayment.paymentCode.slice(-3), 10);
+      return CodeGeneratorUtils.generatePaymentCode(lastSequence + 1);
+    }
+
+    return CodeGeneratorUtils.generatePaymentCode(1);
   }
 }
