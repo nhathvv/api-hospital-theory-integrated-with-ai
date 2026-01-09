@@ -8,6 +8,7 @@ import { PaymentRepository } from './repository/payment.repository';
 import { PaymentStatus, TransferType } from './enum';
 import { ExceptionUtils, CodeGeneratorUtils } from '../common/utils';
 import { PaymentBlockchainService } from '../blockchain';
+import { PaymentGateway } from './payment.gateway';
 
 @Injectable()
 export class PaymentService {
@@ -16,6 +17,7 @@ export class PaymentService {
   constructor(
     private readonly paymentRepository: PaymentRepository,
     private readonly paymentBlockchainService: PaymentBlockchainService,
+    private readonly paymentGateway: PaymentGateway,
   ) {}
 
   async findAll(query: QueryPaymentDto) {
@@ -70,6 +72,18 @@ export class PaymentService {
     this.logger.log(`Payment ${paymentCode} processed successfully`);
 
     this.recordOnBlockchainAsync(payment.id);
+
+    const patientUserId = payment.appointment?.patient?.userId;
+    if (patientUserId) {
+      this.paymentGateway.emitPaymentSuccess(patientUserId, {
+        paymentId: payment.id,
+        paymentCode,
+        amount: data.transferAmount,
+        appointmentId: payment.appointment.id,
+        message: 'Thanh toán thành công!',
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     return {
       success: true,

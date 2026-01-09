@@ -1,7 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, OnModuleInit, Logger } from '@nestjs/common';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { Readable } from 'stream';
 import * as crypto from 'crypto';
+import { EnvService } from '../configs/envs/env-service';
 
 export enum UploadFolder {
   AVATARS = 'hospital/avatars',
@@ -21,7 +22,8 @@ export interface UploadResult {
 }
 
 @Injectable()
-export class CloudinaryService {
+export class CloudinaryService implements OnModuleInit {
+  private readonly logger = new Logger(CloudinaryService.name);
   private readonly allowedImageTypes = [
     'image/jpeg',
     'image/png',
@@ -38,6 +40,26 @@ export class CloudinaryService {
   private readonly maxImageSize = 5 * 1024 * 1024;
   private readonly maxDocumentSize = 10 * 1024 * 1024;
 
+  onModuleInit() {
+    const envService = EnvService.getInstance();
+    const cloudName = envService.getCloudinaryCloudName();
+    const apiKey = envService.getCloudinaryApiKey();
+    const apiSecret = envService.getCloudinaryApiSecret();
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      this.logger.warn('Cloudinary credentials not configured!');
+      return;
+    }
+
+    cloudinary.config({
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret,
+    });
+
+    this.logger.log(`Cloudinary configured with cloud_name: ${cloudName}`);
+  }
+
   async uploadImage(
     file: Express.Multer.File,
     folder: UploadFolder = UploadFolder.AVATARS,
@@ -51,13 +73,7 @@ export class CloudinaryService {
     folder: UploadFolder = UploadFolder.MEDICAL_DOCUMENTS,
   ): Promise<UploadResult> {
     this.validateFile(file, this.allowedDocumentTypes, this.maxDocumentSize);
-    const isPdf = file.mimetype === 'application/pdf';
-    const isWord =
-      file.mimetype === 'application/msword' ||
-      file.mimetype ===
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    const resourceType = isPdf || isWord ? 'raw' : 'auto';
-    return this.upload(file, folder, resourceType);
+    return this.upload(file, folder, 'auto');
   }
 
   async uploadMultipleDocuments(
@@ -81,6 +97,69 @@ export class CloudinaryService {
 
   async deleteMultipleFiles(publicIds: string[]): Promise<void> {
     await Promise.all(publicIds.map((id) => this.deleteFile(id)));
+  }
+
+  getSignedUrl(publicId: string, resourceType: 'image' | 'raw' = 'raw', format?: string): string {
+    const url = cloudinary.url(publicId, {
+      resource_type: resourceType,
+      type: 'upload',
+      sign_url: true,
+      secure: true,
+      format: format,
+    });
+    this.logger.log(`Generated signed URL for ${resourceType}/${publicId}: ${url}`);
+    return url;
+  }
+
+  async downloadFile(publicId: string, resourceType: 'image' | 'raw' = 'image', format?: string): Promise<Buffer> {
+    try {
+      const resource = await cloudinary.api.resource(publicId, {
+        resource_type: resourceType,
+      });
+      
+      this.logger.log(`Resource secure_url: ${resource.secure_url}`);
+      
+      const urlsToTry = [
+        resource.secure_url,
+        cloudinary.url(publicId, {
+          resource_type: resourceType,
+          type: 'upload',
+          secure: true,
+          format: format,
+          flags: 'attachment',
+          sign_url: true,
+        }),
+        cloudinary.url(publicId, {
+          resource_type: resourceType,
+          type: 'upload', 
+          secure: true,
+          format: format,
+          transformation: [{ flags: 'attachment' }],
+          sign_url: true,
+        }),
+        `https://res.cloudinary.com/${cloudinary.config().cloud_name}/image/upload/fl_attachment/${publicId}${format ? '.' + format : ''}`,
+      ];
+      
+      for (const url of urlsToTry) {
+        this.logger.log(`Trying URL: ${url}`);
+        try {
+          const response = await fetch(url);
+          if (response.ok) {
+            this.logger.log(`Success with URL: ${url}`);
+            const arrayBuffer = await response.arrayBuffer();
+            return Buffer.from(arrayBuffer);
+          }
+          this.logger.log(`Failed with status: ${response.status}`);
+        } catch (e) {
+          this.logger.log(`Error with URL: ${e}`);
+        }
+      }
+      
+      throw new Error('All download URLs failed');
+    } catch (error) {
+      this.logger.error(`Download failed: ${error}`);
+      throw error;
+    }
   }
 
   private validateFile(
@@ -134,8 +213,10 @@ export class CloudinaryService {
         },
         (error, result: UploadApiResponse | undefined) => {
           if (error) {
+            this.logger.error(`Upload failed: ${error.message}`, error);
             reject(new BadRequestException('Upload failed: ' + error.message));
           } else if (result) {
+            this.logger.log(`Upload success: ${result.secure_url}`);
             resolve({
               url: result.secure_url,
               publicId: result.public_id,

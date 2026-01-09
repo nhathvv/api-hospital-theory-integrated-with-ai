@@ -62,7 +62,15 @@ export class PaymentRepository {
   async findPaymentByCode(paymentCode: string) {
     return this.prisma.payment.findUnique({
       where: { paymentCode },
-      include: { appointment: true },
+      include: {
+        appointment: {
+          include: {
+            patient: {
+              select: { userId: true },
+            },
+          },
+        },
+      },
     });
   }
 
