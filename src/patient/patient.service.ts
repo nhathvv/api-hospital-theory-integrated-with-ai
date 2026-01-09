@@ -299,7 +299,7 @@ export class PatientService {
           createdAt: true,
         },
       },
-      payment: {
+      payments: {
         select: {
           id: true,
           paymentCode: true,
