@@ -409,6 +409,8 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
       .digest('hex');
 
     this.logger.log(`Uploaded file hash: ${uploadedFileHash}`);
+    this.logger.log(`Original fileContentHash in DB: ${document.fileContentHash ?? 'NULL'}`);
+    this.logger.log(`Match original: ${uploadedFileHash === document.fileContentHash}`);
 
     const hashData: MedicalRecordHashData = {
       documentId: document.id,
@@ -420,6 +422,8 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
       createdAt: document.createdAt.toISOString(),
       fileContentHash: uploadedFileHash,
     };
+
+    this.logger.log(`Hash data used for verification: ${JSON.stringify(hashData, null, 2)}`);
 
     const calculatedHash = this.blockchainService.generateHash(hashData);
 
@@ -452,7 +456,10 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
           ? 'Document has been revoked'
           : 'File is authentic and matches blockchain record',
         uploadedFileHash,
+        originalFileHash: document.fileContentHash,
+        fileHashMatch: uploadedFileHash === document.fileContentHash,
         calculatedDataHash: calculatedHash,
+        originalDataHash: blockchainTx.dataHash,
       };
     }
 
@@ -461,10 +468,20 @@ export class MedicalRecordBlockchainService implements OnModuleInit {
       isRevoked: isRevoked,
       recordType: Number(recordType) as MedicalRecordBlockchainType,
       timestamp: Number(timestamp),
-      message: 'File does NOT match the original. It may have been tampered with.',
+      message: uploadedFileHash === document.fileContentHash
+        ? 'File OK nhưng METADATA trong DB đã bị thay đổi so với blockchain'
+        : 'File does NOT match the original. It may have been tampered with.',
       uploadedFileHash,
+      originalFileHash: document.fileContentHash,
+      fileHashMatch: uploadedFileHash === document.fileContentHash,
       calculatedDataHash: calculatedHash,
       originalDataHash: blockchainTx.dataHash,
+      currentMetadata: {
+        title: document.title,
+        documentType: document.documentType,
+        documentUrl: document.documentUrl,
+        createdAt: document.createdAt.toISOString(),
+      },
     };
   }
 

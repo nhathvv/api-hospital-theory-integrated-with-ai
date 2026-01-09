@@ -64,8 +64,16 @@ export interface VerifyMedicalRecordResult {
   timestamp: number;
   message: string;
   uploadedFileHash?: string;
+  originalFileHash?: string | null;
+  fileHashMatch?: boolean;
   calculatedDataHash?: string;
   originalDataHash?: string;
+  currentMetadata?: {
+    title: string;
+    documentType: string;
+    documentUrl: string;
+    createdAt: string;
+  };
 }
 
 export enum MedicalRecordBlockchainType {
