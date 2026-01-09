@@ -75,12 +75,26 @@ export class PaymentRepository {
   }
 
   async updatePaymentStatus(paymentCode: string, status: PaymentStatus) {
-    return this.prisma.payment.update({
-      where: { paymentCode },
-      data: { status },
+    return this.prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.update({
+        where: { paymentCode },
+        data: { status },
+        include: { appointment: true },
+      });
+
+      if (status === PaymentStatus.SUCCESS && payment.appointment) {
+        await tx.appointment.update({
+          where: { id: payment.appointment.id },
+          data: {
+            status: 'COMPLETED',
+            completedAt: new Date(),
+          },
+        });
+      }
+
+      return payment;
     });
   }
-
 
   async findByPatientId(patientId: string, query: QueryMyPaymentDto) {
     const where = this.buildPatientFilterQuery(patientId, query);

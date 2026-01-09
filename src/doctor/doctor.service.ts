@@ -231,6 +231,106 @@ export class DoctorService {
     });
   }
 
+
+  async getMySchedules(doctorId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const schedules = await this.prisma.doctorSchedule.findMany({
+      where: {
+        doctorId,
+        isActive: true,
+        endDate: { gte: today },
+      },
+      orderBy: { startDate: 'asc' },
+      include: {
+        timeSlots: {
+          orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+        },
+      },
+    });
+
+    return schedules.map((schedule) => ({
+      ...schedule,
+      startDate: this.formatDate(schedule.startDate),
+      endDate: this.formatDate(schedule.endDate),
+      timeSlots: schedule.timeSlots.map((slot) => ({
+        ...slot,
+        availableDates: this.getAvailableDates(
+          schedule.startDate,
+          schedule.endDate,
+          slot.dayOfWeek,
+        ),
+      })),
+    }));
+  }
+
+  async getTodayAppointments(doctorId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const appointments = await this.prisma.appointment.findMany({
+      where: {
+        doctorId,
+        appointmentDate: {
+          gte: today,
+          lt: tomorrow,
+        },
+        status: {
+          in: [
+            AppointmentStatus.PENDING,
+            AppointmentStatus.CONFIRMED,
+            AppointmentStatus.IN_PROGRESS,
+          ],
+        },
+      },
+      orderBy: [
+        { status: 'asc' },
+        { timeSlot: { startTime: 'asc' } },
+      ],
+      include: {
+        patient: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+                phone: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        timeSlot: {
+          select: {
+            id: true,
+            startTime: true,
+            endTime: true,
+            examinationType: true,
+          },
+        },
+      },
+    });
+
+    const queueNumber = appointments.reduce(
+      (acc, apt, index) => {
+        acc[apt.id] = index + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    return appointments.map((apt) => ({
+      ...apt,
+      queueNumber: queueNumber[apt.id],
+      appointmentDate: this.formatDate(apt.appointmentDate),
+    }));
+  }
+
   async remove(id: string) {
     await this.findOne(id);
     return this.prisma.doctor.update({

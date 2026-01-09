@@ -1,98 +1,539 @@
+# 🏥 Hospital Management System - Backend API
+
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Solidity-363636?style=for-the-badge&logo=solidity&logoColor=white" alt="Solidity" />
+  <img src="https://img.shields.io/badge/Polygon-8247E5?style=for-the-badge&logo=polygon&logoColor=white" alt="Polygon" />
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+<p align="center">
+  <b>Hệ thống quản lý bệnh viện tích hợp AI & Blockchain</b>
+  <br />
+  <i>Hospital Management System integrated with AI & Blockchain</i>
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📋 Table of Contents
 
-## Project setup
+- [Overview](#-overview)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Architecture](#-architecture)
+- [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
+- [Database Schema](#-database-schema)
+- [API Documentation](#-api-documentation)
+- [Blockchain Integration](#-blockchain-integration)
+- [AI Integration](#-ai-integration)
+- [WebSocket Events](#-websocket-events)
+- [Deployment](#-deployment)
 
-```bash
-$ npm install
+---
+
+## 🌟 Overview
+
+A comprehensive hospital management system that revolutionizes healthcare administration by combining modern web technologies with AI-powered doctor recommendations and blockchain-based data verification.
+
+### Key Highlights
+
+- 🤖 **AI-Powered Doctor Recommendations** - Analyzes patient symptoms using Google Gemini AI
+- ⛓️ **Blockchain Verification** - Ensures data integrity for payments and medical records
+- 💬 **Real-time Communication** - WebSocket-based chat and payment notifications
+- 🔐 **Secure Authentication** - JWT-based auth with refresh token rotation
+- 📱 **Multi-platform Ready** - RESTful API supporting web and mobile clients
+
+---
+
+## ✨ Features
+
+### 👤 User Management
+- Multi-role authentication (Admin, Doctor, Patient)
+- JWT access & refresh token mechanism
+- Profile management with avatar upload
+
+### 👨‍⚕️ Doctor Management
+- Doctor profiles with specialties, education, certifications, awards
+- Flexible schedule management with time slots
+- Department & specialty organization
+
+### 🏥 Patient Management
+- Patient health profiles (blood type, allergies, chronic diseases)
+- Health insurance information
+- Emergency contact details
+
+### 📅 Appointment System
+- Multi-step booking workflow
+- Status tracking (Pending → Confirmed → In Progress → Completed)
+- Cancellation with reason tracking
+- Examination types: In-person & Online
+
+### 💊 Prescription & Medicine
+- Medicine inventory with batch management
+- Prescription creation during consultation
+- Automatic stock deduction
+- Low stock & expiry alerts
+
+### 💳 Payment System
+- Multiple payment methods (Cash, Bank Transfer)
+- QR Code payment with SePay integration
+- Real-time payment confirmation via WebSocket
+- Blockchain transaction recording
+
+### 🔗 Blockchain Integration
+- Payment verification on Polygon network
+- Medical record integrity verification
+- Smart contracts with Access Control
+
+### 🤖 AI Integration
+- Symptom analysis with Google Gemini
+- Doctor recommendation based on:
+  - Specialty matching (40%)
+  - Experience & qualifications (25%)
+  - Sub-specialty relevance (20%)
+  - Years of experience (15%)
+- Urgency level detection
+- Follow-up questions for better accuracy
+
+### 💬 Support System
+- Real-time chat between patients and admin
+- Conversation management with priority levels
+- Message read status tracking
+
+---
+
+## 🛠 Tech Stack
+
+| Category | Technologies |
+|----------|-------------|
+| **Framework** | NestJS 11 |
+| **Language** | TypeScript 5 |
+| **Database** | PostgreSQL |
+| **ORM** | Prisma |
+| **Authentication** | JWT, Passport |
+| **Real-time** | Socket.IO |
+| **Blockchain** | Solidity, Hardhat, Ethers.js |
+| **AI** | Google Gemini API |
+| **File Upload** | Multer |
+| **Validation** | class-validator, class-transformer |
+| **Documentation** | Swagger/OpenAPI |
+| **Containerization** | Docker, Docker Compose |
+
+---
+
+## 🏗 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Client Applications                       │
+│                    (Web App / Mobile App)                        │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                         API Gateway                              │
+│                    (NestJS Application)                          │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │    Auth     │  │   Doctor    │  │   Patient   │              │
+│  │   Module    │  │   Module    │  │   Module    │              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │ Appointment │  │ Prescription│  │   Payment   │              │
+│  │   Module    │  │   Module    │  │   Module    │              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │    AI       │  │ Blockchain  │  │Conversation │              │
+│  │   Module    │  │   Module    │  │   Module    │              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
+└─────────────────────────────────────────────────────────────────┘
+        │                   │                    │
+        ▼                   ▼                    ▼
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│  PostgreSQL   │  │   Polygon     │  │  Google AI    │
+│   Database    │  │  Blockchain   │  │    Gemini     │
+└───────────────┘  └───────────────┘  └───────────────┘
 ```
 
-## Compile and run the project
+---
 
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL 14+
+- Docker & Docker Compose (optional)
+
+### Installation
+
+1. **Clone the repository**
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+git clone <repository-url>
+cd api-hospital-theory-integrated-with-ai
 ```
 
-## Run tests
-
+2. **Install dependencies**
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+3. **Set up environment variables**
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+cp .env.example .env
+# Edit .env with your configurations
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+4. **Run database migrations**
+```bash
+npx prisma migrate dev
+```
 
-## Resources
+5. **Seed the database (optional)**
+```bash
+npx prisma db seed
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+6. **Start the development server**
+```bash
+npm run start:dev
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Using Docker
 
-## Support
+```bash
+# Development
+docker-compose up -d
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Production
+docker-compose -f docker-compose.prod.yml up -d
+```
 
-## Stay in touch
+---
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## 🔐 Environment Variables
 
-## License
+Create a `.env` file in the root directory:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```env
+# Application
+PORT=3001
+NODE_ENV=development
+
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/hospital_db"
+
+# JWT
+JWT_ACCESS_SECRET=your-access-secret
+JWT_REFRESH_SECRET=your-refresh-secret
+JWT_ACCESS_EXPIRATION=15m
+JWT_REFRESH_EXPIRATION=7d
+
+# Blockchain
+BLOCKCHAIN_ENABLED=true
+BLOCKCHAIN_NETWORK=amoy
+BLOCKCHAIN_RPC_URL=https://rpc-amoy.polygon.technology
+BLOCKCHAIN_PRIVATE_KEY=your-wallet-private-key
+PAYMENT_CONTRACT_ADDRESS=0x...
+MEDICAL_RECORD_CONTRACT_ADDRESS=0x...
+
+# AI
+GEMINI_API_KEY=your-gemini-api-key
+
+# File Upload
+UPLOAD_DIR=./uploads
+MAX_FILE_SIZE=10485760
+
+# SePay (Payment Gateway)
+SEPAY_WEBHOOK_SECRET=your-webhook-secret
+```
+
+---
+
+## 📊 Database Schema
+
+### Core Entities
+
+```
+User (users)
+├── Doctor (doctors)
+│   ├── DoctorEducation
+│   ├── DoctorCertification
+│   ├── DoctorAward
+│   └── DoctorSchedule
+│       └── DoctorTimeSlot
+└── Patient (patients)
+    └── Conversation
+        └── Message
+
+Department (departments)
+└── Specialty (specialties)
+    └── Doctor
+
+Appointment (appointments)
+├── AppointmentDocument
+├── PrescriptionItem
+│   └── MedicineBatch
+└── Payment
+    └── BlockchainTransaction
+
+MedicineCategory
+└── Medicine
+    └── MedicineBatch
+```
+
+### Key Enums
+
+| Enum | Values |
+|------|--------|
+| `UserRole` | ADMIN, DOCTOR, PATIENT |
+| `AppointmentStatus` | PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW |
+| `PaymentStatus` | PENDING, SUCCESS, FAILED |
+| `PaymentMethod` | CASH, BANK_TRANSFER |
+| `ExaminationType` | IN_PERSON, ONLINE |
+| `BatchStatus` | IN_STOCK, LOW_STOCK, OUT_OF_STOCK, EXPIRED, DISPOSED |
+
+---
+
+## 📚 API Documentation
+
+API documentation is available via Swagger UI at:
+
+```
+http://localhost:3001/api/docs
+```
+
+### Main Endpoints
+
+| Module | Endpoint | Description |
+|--------|----------|-------------|
+| **Auth** | `POST /auth/register` | User registration |
+| | `POST /auth/login` | User login |
+| | `POST /auth/refresh` | Refresh access token |
+| **Doctor** | `GET /doctors` | List doctors |
+| | `GET /doctors/:id` | Get doctor details |
+| | `POST /doctors` | Create doctor (Admin) |
+| **Patient** | `GET /patients` | List patients |
+| | `GET /patients/me` | Get current patient profile |
+| **Appointment** | `POST /appointments` | Create appointment |
+| | `PATCH /appointments/:id/status` | Update status |
+| | `POST /appointments/:id/prescription` | Add prescription |
+| **Payment** | `POST /payments` | Create payment |
+| | `GET /payments/:id/verify` | Verify on blockchain |
+| **AI** | `POST /ai-recommendation/recommend` | Get doctor recommendations |
+| | `POST /ai-recommendation/chat` | Chat with AI |
+
+---
+
+## ⛓ Blockchain Integration
+
+### Smart Contracts
+
+#### HospitalPaymentRegistry
+Records and verifies payment transactions on the blockchain.
+
+```solidity
+function recordPayment(
+    bytes32 _paymentId,
+    bytes32 _appointmentId,
+    bytes32 _dataHash,
+    uint256 _amount,
+    address _patient
+) external;
+
+function verifyPayment(
+    bytes32 _paymentId,
+    bytes32 _dataHash
+) external view returns (bool isValid, PaymentStatus status, uint256 amount, uint256 timestamp);
+```
+
+#### HospitalMedicalRecordRegistry
+Records and verifies medical documents/records.
+
+### Deploying Contracts
+
+```bash
+cd blockchain
+
+# Install dependencies
+npm install
+
+# Compile contracts
+npx hardhat compile
+
+# Deploy to Polygon Amoy testnet
+npx hardhat run scripts/deploy-all.ts --network amoy
+```
+
+### Network Configuration
+
+| Network | Chain ID | RPC URL |
+|---------|----------|---------|
+| Polygon Amoy (Testnet) | 80002 | https://rpc-amoy.polygon.technology |
+| Polygon Mainnet | 137 | https://polygon-rpc.com |
+
+---
+
+## 🤖 AI Integration
+
+### How It Works
+
+1. **Patient describes symptoms** → System sends to Gemini AI
+2. **AI analyzes symptoms** → May ask follow-up questions
+3. **AI determines**:
+   - Possible conditions
+   - Recommended specialties
+   - Urgency level (LOW, MODERATE, HIGH, EMERGENCY)
+4. **System matches doctors** → Returns ranked recommendations
+
+### AI Ranking Algorithm
+
+| Factor | Weight |
+|--------|--------|
+| Specialty match | 40% |
+| Professional qualifications | 25% |
+| Sub-specialty relevance | 20% |
+| Years of experience | 15% |
+
+### Example Request
+
+```json
+POST /ai-recommendation/recommend
+{
+  "symptoms": "Tôi bị đau đầu kéo dài 3 ngày, kèm chóng mặt",
+  "patientInfo": {
+    "age": 35,
+    "gender": "MALE"
+  }
+}
+```
+
+---
+
+## 🔌 WebSocket Events
+
+### Connection
+
+```typescript
+const socket = io('http://localhost:3001', {
+  auth: { token: 'your-jwt-token' }
+});
+```
+
+### Payment Events
+
+| Event | Direction | Description |
+|-------|-----------|-------------|
+| `payment:success` | Server → Client | Payment confirmed |
+
+### Chat Events
+
+| Event | Direction | Description |
+|-------|-----------|-------------|
+| `join_conversation` | Client → Server | Join a conversation room |
+| `leave_conversation` | Client → Server | Leave a conversation room |
+| `send_message` | Client → Server | Send a message |
+| `new_message` | Server → Client | New message received |
+| `typing` | Bidirectional | User is typing |
+| `mark_read` | Client → Server | Mark messages as read |
+
+---
+
+## 🐳 Deployment
+
+### Docker Production Build
+
+```bash
+# Build image
+docker build -t hospital-api:latest .
+
+# Run container
+docker run -d \
+  --name hospital-api \
+  -p 3001:3001 \
+  --env-file .env.production \
+  hospital-api:latest
+```
+
+### Docker Compose (Full Stack)
+
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── admin/              # Admin module
+├── ai-recommendation/  # AI integration module
+│   ├── gemini/        # Gemini AI service
+│   └── prompts/       # AI system prompts
+├── appointment/        # Appointment management
+├── auth/              # Authentication & authorization
+├── blockchain/        # Blockchain integration
+├── common/            # Shared utilities, guards, decorators
+├── configs/           # Configuration files
+├── conversation/      # Chat/Support system
+├── department/        # Department management
+├── doctor/            # Doctor management
+├── doctor-schedule/   # Doctor scheduling
+├── medicine/          # Medicine management
+├── medicine-batch/    # Inventory management
+├── medicine-category/ # Medicine categories
+├── patient/           # Patient management
+├── payment/           # Payment processing
+├── prescription/      # Prescription management
+├── prisma/            # Prisma client
+├── specialty/         # Medical specialties
+├── upload/            # File upload handling
+└── user/              # User management
+
+blockchain/
+├── contracts/         # Solidity smart contracts
+├── scripts/           # Deployment scripts
+├── test/              # Contract tests
+└── typechain-types/   # Generated TypeScript types
+
+prisma/
+├── migrations/        # Database migrations
+└── schema.prisma      # Database schema
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 👨‍💻 Author
+
+**Hoang Van Nhat**
+
+---
+
+<p align="center">
+  Made with ❤️ using NestJS, Blockchain & AI
+</p>

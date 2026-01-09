@@ -140,9 +140,13 @@ export class PaymentService {
       );
     }
 
-    if (appointment.totalFee !== transferAmount) {
+    const isFullPayment = appointment.totalFee === transferAmount;
+    const isMedicinePayment =
+      appointment.medicineFee > 0 && appointment.medicineFee === transferAmount;
+
+    if (!isFullPayment && !isMedicinePayment) {
       ExceptionUtils.throwBadRequest(
-        `Total fee (${appointment.totalFee}) does not match payment amount (${transferAmount})`,
+        `Payment amount (${transferAmount}) does not match total fee (${appointment.totalFee}) or medicine fee (${appointment.medicineFee})`,
       );
     }
 

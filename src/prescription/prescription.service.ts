@@ -118,100 +118,112 @@ export class PrescriptionService {
           where: { appointmentId: appointment.id },
         });
 
-      for (const existingItem of existingItems) {
-        await tx.medicineBatch.update({
-          where: { id: existingItem.medicineBatchId },
-          data: {
-            currentStock: { increment: existingItem.quantity },
-          },
-        });
-      }
-
-      await tx.prescriptionItem.deleteMany({
-        where: { appointmentId: appointment.id },
-      });
-
-      let totalMedicineFee = 0;
-
-      for (const item of items) {
-        const batch = batchMap.get(item.medicineBatchId)!;
-        const itemTotal = batch.sellingPrice * item.quantity;
-        totalMedicineFee += itemTotal;
-
-        await tx.prescriptionItem.create({
-          data: {
-            appointmentId: appointment.id,
-            medicineBatchId: item.medicineBatchId,
-            quantity: item.quantity,
-            dosage: item.dosage,
-            instructions: item.instructions,
-            unitPrice: batch.sellingPrice,
-            totalPrice: itemTotal,
-          },
-        });
-
-        await tx.medicineBatch.update({
-          where: { id: item.medicineBatchId },
-          data: {
-            currentStock: { decrement: item.quantity },
-          },
-        });
-      }
-
-      const consultationFee = appointment.consultationFee || 0;
-      const totalFee = consultationFee + totalMedicineFee;
-
-      const updatedAppointment = await tx.appointment.update({
-        where: { id: appointment.id },
-        data: {
-          medicineFee: totalMedicineFee,
-          totalFee,
-          status: AppointmentStatus.COMPLETED,
-          completedAt: new Date(),
-        },
-        include: {
-          prescriptionItems: {
-            include: {
-              medicineBatch: {
-                include: { medicine: true },
-              },
+        for (const existingItem of existingItems) {
+          await tx.medicineBatch.update({
+            where: { id: existingItem.medicineBatchId },
+            data: {
+              currentStock: { increment: existingItem.quantity },
             },
-          },
-          doctor: {
-            include: {
-              user: {
-                select: {
-                  fullName: true,
-                  email: true,
-                },
-              },
-              primarySpecialty: true,
+          });
+        }
+
+        await tx.prescriptionItem.deleteMany({
+          where: { appointmentId: appointment.id },
+        });
+
+        let totalMedicineFee = 0;
+
+        for (const item of items) {
+          const batch = batchMap.get(item.medicineBatchId)!;
+          const itemTotal = batch.sellingPrice * item.quantity;
+          totalMedicineFee += itemTotal;
+
+          await tx.prescriptionItem.create({
+            data: {
+              appointmentId: appointment.id,
+              medicineBatchId: item.medicineBatchId,
+              quantity: item.quantity,
+              dosage: item.dosage,
+              instructions: item.instructions,
+              unitPrice: batch.sellingPrice,
+              totalPrice: itemTotal,
             },
+          });
+
+          await tx.medicineBatch.update({
+            where: { id: item.medicineBatchId },
+            data: {
+              currentStock: { decrement: item.quantity },
+            },
+          });
+        }
+
+        const consultationFee = appointment.consultationFee || 0;
+        const totalFee = consultationFee + totalMedicineFee;
+
+        const hasMedicineFee = totalMedicineFee > 0;
+        const newStatus = hasMedicineFee
+          ? AppointmentStatus.IN_PROGRESS
+          : AppointmentStatus.COMPLETED;
+
+        const updatedAppointment = await tx.appointment.update({
+          where: { id: appointment.id },
+          data: {
+            medicineFee: totalMedicineFee,
+            totalFee,
+            status: newStatus,
+            completedAt: hasMedicineFee ? null : new Date(),
           },
-          patient: {
-            include: {
-              user: {
-                select: {
-                  fullName: true,
-                  email: true,
-                  phone: true,
+          include: {
+            prescriptionItems: {
+              include: {
+                medicineBatch: {
+                  include: { medicine: true },
                 },
               },
             },
+            doctor: {
+              include: {
+                user: {
+                  select: {
+                    fullName: true,
+                    email: true,
+                  },
+                },
+                primarySpecialty: true,
+              },
+            },
+            patient: {
+              include: {
+                user: {
+                  select: {
+                    fullName: true,
+                    email: true,
+                    phone: true,
+                  },
+                },
+              },
+            },
           },
-        },
-      });
+        });
 
-      this.logger.log(
-        `Prescription created and appointment completed: ${appointment.id}. Medicine fee: ${totalMedicineFee}, Total fee: ${totalFee}`,
-      );
+        if (hasMedicineFee) {
+          await tx.payment.updateMany({
+            where: { appointmentId: appointment.id },
+            data: { status: 'PENDING' },
+          });
+        }
 
-      await this.updateBatchStatuses(
-        tx,
-        items.map((i) => i.medicineBatchId),
-      );
+        this.logger.log(
+          `Prescription created for appointment ${appointment.id}. Medicine fee: ${totalMedicineFee}, Total fee: ${totalFee}, Status: ${newStatus}`,
+        );
 
-      return this.formatPrescriptionResponse(updatedAppointment);
+        await this.updateBatchStatuses(
+          tx,
+          items.map((i) => i.medicineBatchId),
+        );
+
+        return this.formatPrescriptionResponse(updatedAppointment);
       },
       { timeout: 30000 },
     );
